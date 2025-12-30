@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>CBT - Ujian Sedang Berlangsung</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #f4f4f4; }
+        .pakta-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:100; padding: 50px; box-sizing: border-box; }
+        .container { display: flex; padding: 20px; gap: 20px; }
+        .main-exam { flex: 3; background: white; padding: 20px; border-radius: 8px; }
+        .sidebar { flex: 1; background: white; padding: 20px; border-radius: 8px; }
+        .grid-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 15px; }
+        .nav-item { padding: 10px; text-align: center; border: 1px solid #ccc; cursor: pointer; background: #eee; }
+        .nav-item.answered { background: #007bff; color: white; }
+        .nav-item.active { border: 2px solid black; font-weight: bold; }
+        .option-item { border: 1px solid #ddd; padding: 10px; margin: 5px 0; cursor: pointer; border-radius: 5px; }
+        .option-item:hover { background: #f0f0f0; }
+        .option-item.selected { background: #d1e7dd; border-color: #0f5132; }
+        img { max-width: 100%; height: auto; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div id="pakta" class="pakta-overlay">
+    <h2>Pakta Integritas</h2>
+    <p>Saya, <b id="p_nama"></b> (<b id="p_kls"></b>), berjanji akan mengerjakan CBT Online dengan penuh tanggung jawab dan jujur.</p>
+    <ul>
+        <li>Pindah Tab 1x: Peringatan</li>
+        <li>Pindah Tab 2x: Peringatan Keras</li>
+        <li>Pindah Tab 3x: Otomatis Keluar/Logout</li>
+    </ul>
+    <label><input type="checkbox" id="setuju"> Saya sudah membaca dan mengerti</label><br><br>
+    <button onclick="mulaiUjian()" style="padding:10px 20px">MULAI SEKARANG</button>
+</div>
+
+<div class="container" id="exam-ui" style="display:none">
+    <div class="main-exam">
+        <div id="question-area"></div>
+        <hr>
+        <button onclick="prev()">Kembali</button>
+        <button onclick="next()">Lanjut</button>
+        <button id="finishBtn" onclick="submitAkhir()" style="display:none; background:green; color:white">SELESAI</button>
+    </div>
+    <div class="sidebar">
+        <h3>Navigasi Soal</h3>
+        <div class="grid-nav" id="nav-grid"></div>
+    </div>
+</div>
+
+<script>
+    const WORKER_URL = "https://URL-WORKER-ANDA.workers.dev";
+    let curang = 0;
+    let questions = [];
+    let currentIndex = 0;
+    let answers = {};
+    let dataSiswa = JSON.parse(sessionStorage.getItem('siswa'));
+
+    if(!dataSiswa) window.location.href = 'index.html';
+
+    document.getElementById('p_nama').innerText = dataSiswa.nama;
+    document.getElementById('p_kls').innerText = dataSiswa.id_kelas;
+
+    // Deteksi Pindah Tab
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            curang++;
+            if (curang === 1) alert("Peringatan 1: Jangan pindah tab!");
+            else if (curang === 2) alert("Peringatan 2: PERINGATAN KERAS!");
+            else if (curang >= 3) {
+                alert("Anda didiskualifikasi karena curang.");
+                window.location.href = 'index.html';
+            }
+        }
+    });
+
+    async function mulaiUjian() {
+        if(!document.getElementById('setuju').checked) return alert("Centang persetujuan!");
+        document.getElementById('pakta').style.display = 'none';
+        document.getElementById('exam-ui').style.display = 'flex';
+
+        const res = await fetch(`${WORKER_URL}/api/bank_soal?where=(token,eq,${dataSiswa.token})`);
+        const json = await res.json();
+        questions = shuffle(json.list);
+        renderNav();
+        showSoal(0);
+    }
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function showSoal(idx) {
+        currentIndex = idx;
+        const q = questions[idx];
+        const opsi = [
+            {k: 'A', v: q.opsi_a}, {k: 'B', v: q.opsi_b}, 
+            {k: 'C', v: q.opsi_c}, {k: 'D', v: q.opsi_d}
+        ];
+        const opsiAcak = shuffle([...opsi]);
+
+        let imgHtml = q.img_link ? `<img src="https://drive.google.com/uc?export=view&id=${q.img_link}">` : '';
+        
+        let html = `<h4>Soal Nomor ${idx+1}</h4>${imgHtml}<p>${q.pertanyaan}</p>`;
+        opsiAcak.forEach(o => {
+            let selected = answers[q.id] === o.k ? 'selected' : '';
+            html += `<div class="option-item ${selected}" onclick="pilih('${q.id}', '${o.k}')">${o.k}. ${o.v}</div>`;
+        });
+
+        document.getElementById('question-area').innerHTML = html;
+        renderNav();
+        
+        document.getElementById('finishBtn').style.display = (idx === questions.length -1) ? 'inline' : 'none';
+    }
+
+    function pilih(qId, val) {
+        answers[qId] = val;
+        showSoal(currentIndex);
+    }
+
+    function renderNav() {
+        const grid = document.getElementById('nav-grid');
+        grid.innerHTML = '';
+        questions.forEach((q, i) => {
+            const div = document.createElement('div');
+            div.className = `nav-item ${answers[q.id] ? 'answered' : ''} ${currentIndex === i ? 'active' : ''}`;
+            div.innerText = i + 1;
+            div.onclick = () => showSoal(i);
+            grid.appendChild(div);
+        });
+    }
+
+    function next() { if(currentIndex < questions.length - 1) showSoal(currentIndex + 1); }
+    function prev() { if(currentIndex > 0) showSoal(currentIndex - 1); }
+
+    async function submitAkhir() {
+        if(!confirm("Kirim jawaban sekarang?")) return;
+        
+        let benar = 0;
+        questions.forEach(q => { if(answers[q.id] === q.jawaban_benar) benar++; });
+        
+        const wktSelesai = new Date();
+        const wktMulai = new Date(sessionStorage.getItem('wkt_mulai'));
+        const durasi = Math.floor((wktSelesai - wktMulai) / 60000); // menit
+
+        const payload = {
+            nama_siswa: dataSiswa.nama,
+            token: dataSiswa.token,
+            mapel: questions[0].mapel,
+            kelas: dataSiswa.kelas,
+            id_kelas: dataSiswa.id_kelas,
+            jml_benar: benar,
+            jml_salah: questions.length - benar,
+            nilai: (benar / questions.length) * 100,
+            jml_curang: curang,
+            nama_guru: questions[0].nama_guru,
+            jawaban: JSON.stringify(answers),
+            wkt_mulai: wktMulai.toISOString(),
+            wkt_selesai: wktSelesai.toISOString(),
+            wkt_diberikan: questions[0].ujian, // mengambil info durasi dari kolom 'ujian'
+            wkt_digunakan: durasi + " Menit"
+        };
+
+        await fetch(`${WORKER_URL}/api/nilai`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        alert("Ujian Selesai! Nilai Anda: " + payload.nilai);
+        sessionStorage.clear();
+        window.location.href = 'index.html';
+    }
+</script>
+</body>
+</html>
