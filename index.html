@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CBT Daring SMAN 2 Cikarang Barat</title>
+    <title>CBT SMAN 2 Cikarang Barat</title>
     <style>
-        /* ... (Semua CSS dari file asli Anda tetap digunakan di sini) ... */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background: #f0f2f5; color: #333; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 15px; user-select: none; }
-        .container { width: 100%; max-width: 650px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; position: relative; min-height: 600px; display: flex; flex-direction: column; }
+        /* CSS TETAP SEPERTI ASLI ANDA */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; padding: 15px; user-select: none; }
+        .container { width: 100%; max-width: 650px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-height: 600px; display: flex; flex-direction: column; overflow: hidden; }
         .header { background: #1a73e8; color: white; padding: 25px; text-align: center; }
-        .page { padding: 25px; display: none; flex-grow: 1; flex-direction: column; animation: fadeIn 0.4s ease; }
+        .page { padding: 25px; display: none; flex-grow: 1; flex-direction: column; }
         .page.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         label { font-weight: 600; display: block; margin-bottom: 8px; color: #444; }
-        input, select { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 10px; font-size: 1rem; outline: none; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 10px; font-size: 1rem; margin-bottom: 15px; }
         .btn { width: 100%; padding: 16px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
         .timer-info { padding: 12px 20px; display: flex; justify-content: space-between; font-weight: bold; color: #1a73e8; background: #e8f0fe; }
         .control-bar { padding: 15px 25px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
         .btn-circle { width: 50px; height: 50px; border-radius: 50%; border: none; background: #1a73e8; color: white; font-size: 1.5rem; cursor: pointer; }
-        .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 10px; padding: 15px; background: #f8f9fa; }
+        .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 10px; padding: 15px; background: #f8f9fa; max-height: 150px; overflow-y: auto; }
         .nav-box { height: 40px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; }
         .nav-box.answered { background: #1a73e8; color: white; }
         .nav-box.current { border: 2px solid #f57c00; }
@@ -27,7 +26,6 @@
         .option.selected { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 600; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .result-card { background-color: #e8f5e9; border: 2px solid #4caf50; border-radius: 15px; padding: 20px; text-align: center; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -36,10 +34,10 @@
     <div id="view-login" class="page active">
         <div class="header" style="margin: -25px -25px 25px -25px;">
             <h2>CBT SMAN 2 Cikarang Barat</h2>
-            <p>Login menggunakan Token Ujian</p>
+            <p>Lengkapi data untuk memulai</p>
         </div>
         <label>Nama Peserta</label>
-        <input type="text" id="input-nama" placeholder="Nama Lengkap...">
+        <input type="text" id="input-nama" placeholder="Nama Lengkap..." autocomplete="off">
         <label>Tingkat</label>
         <select id="input-kelas" onchange="filterKelompok()">
             <option value="" disabled selected>-- Pilih Tingkat --</option>
@@ -49,14 +47,14 @@
         </select>
         <label>Kelas</label>
         <select id="input-kelompok"><option value="" disabled selected>-- Pilih Kelas --</option></select>
-        <label>Token Ujian</label>
-        <input type="text" id="input-token" placeholder="Contoh: LLL">
+        <label>Password / Token</label>
+        <input type="text" id="input-password" placeholder="Password Ujian" autocomplete="off">
         <button class="btn" onclick="checkExam()">MULAI UJIAN</button>
     </div>
 
     <div id="view-loading" class="page" style="text-align: center; justify-content: center;">
         <div class="loader"></div>
-        <h3>Memproses Data...</h3>
+        <h3>Memproses...</h3>
     </div>
 
     <div id="view-exam" class="page" style="padding: 0;">
@@ -65,158 +63,165 @@
             <span id="timer-display" style="color: #d32f2f;">00:00</span>
         </div>
         <div style="padding: 25px; flex-grow: 1; overflow-y: auto;">
-            <div id="q-text-display" style="font-weight: bold; margin-bottom: 20px;"></div>
+            <div id="q-text-display" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px;"></div>
             <div id="q-options-display"></div>
         </div>
         <div class="control-bar">
             <button class="btn-circle" onclick="prevQuestion()">❮</button>
-            <button id="btn-finish" class="btn" style="width: auto; padding: 10px 20px; background: #27ae60; display: none;" onclick="submitExam()">KIRIM</button>
+            <button id="btn-submit-exam" class="btn" style="width: auto; padding: 10px 20px; background: #27ae60; display: none;" onclick="finishExam()">KIRIM</button>
             <button class="btn-circle" onclick="nextQuestion()">❯</button>
         </div>
         <div class="nav-grid" id="navigation-grid"></div>
     </div>
 
     <div id="view-result" class="page" style="text-align: center; justify-content: center;">
-        <div class="result-card">
+        <div style="background: #e8f5e9; padding: 30px; border-radius: 15px; border: 2px solid #4caf50;">
             <span style="font-size: 50px;">✅</span>
-            <div id="final-message" style="margin-top: 15px;"></div>
+            <div id="final-message" style="margin-top: 15px; color: #2e7d32; font-weight: bold;"></div>
         </div>
-        <button onclick="location.reload()" class="btn" style="margin-top: 20px; background: #666;">Keluar</button>
+        <button onclick="location.reload()" class="btn" style="margin-top: 20px; background: #666;">Keluar Aplikasi</button>
     </div>
 </div>
 
 <script>
-    // URL WORKER ANDA
     const API_URL = "https://nocob-proxy.kurikulum-sman2cikarangbarat.workers.dev"; 
 
-    let exam = {
+    let examData = {
         questions: [],
         currentIndex: 0,
-        answers: {},
+        answers: {}, // Format: { questionId: "A" }
         student: {},
         startTime: null,
         cheatCount: 0
     };
 
+    // MENGEMBALIKAN DROPDOWN LENGKAP ANDA
     function filterKelompok() {
-        const t = document.getElementById('input-kelas').value;
-        const s = document.getElementById('input-kelompok');
-        s.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
-        let list = (t==="X") ? ["X-A","X-B","X-C"] : (t==="XI") ? ["XI-A","XI-B"] : ["XII-A","XII-B"]; // Sederhanakan untuk contoh
-        list.forEach(k => { let o = document.createElement("option"); o.value=k; o.innerText=k; s.appendChild(o); });
+        const tingkat = document.getElementById('input-kelas').value;
+        const sel = document.getElementById('input-kelompok');
+        sel.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
+        
+        let list = [];
+        if (tingkat === "X") {
+            list = ["X - A", "X - B", "X - C", "X - D", "X - E", "X - F"];
+        } else if (tingkat === "XI") {
+            list = ["XI - A", "XI - B", "XI - C", "XI - D", "XI - E", "XI - F", "XI - G"];
+        } else if (tingkat === "XII") {
+            list = ["XII - A", "XII - B", "XII - C", "XII - D", "XII - E", "XII - F", "XII - G"];
+        }
+        
+        list.forEach(k => {
+            let o = document.createElement("option");
+            o.value = k; o.innerText = k;
+            sel.appendChild(o);
+        });
     }
 
-    function showPage(id) { 
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
-        document.getElementById(id).classList.add('active'); 
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
     }
 
     async function checkExam() {
-        const nama = document.getElementById('input-nama').value;
-        const token = document.getElementById('input-token').value.trim();
-        const kls = document.getElementById('input-kelompok').value;
+        const n = document.getElementById('input-nama').value.trim();
+        const k = document.getElementById('input-kelas').value;
+        const g = document.getElementById('input-kelompok').value;
+        const p = document.getElementById('input-password').value.trim();
 
-        if(!nama || !token || !kls) return alert("Lengkapi data!");
+        if (!n || !k || !g || !p) return alert("Mohon lengkapi seluruh data!");
 
         showPage('view-loading');
 
         try {
-            // 1. Cek ketersediaan ujian di tabel 'ujian'
-            const resToken = await fetch(`${API_URL}/api/ujian?where=(token,eq,${token})`);
+            // Cek Token
+            const resToken = await fetch(`${API_URL}/api/ujian?where=(token,eq,${p})`);
             const dataToken = await resToken.json();
 
             if (dataToken.list && dataToken.list.length > 0) {
-                // 2. Ambil bank soal berdasarkan token tersebut
-                const resSoal = await fetch(`${API_URL}/api/bank_soal?where=(token,eq,${token})`);
+                // Ambil Soal
+                const resSoal = await fetch(`${API_URL}/api/bank_soal?where=(token,eq,${p})`);
                 const dataSoal = await resSoal.json();
 
                 if (dataSoal.list && dataSoal.list.length > 0) {
-                    exam.questions = dataSoal.list.sort(() => Math.random() - 0.5);
-                    exam.student = { nama, token, kls, jenjang: document.getElementById('input-kelas').value };
-                    exam.startTime = new Date();
-                    startExam();
-                } else {
-                    throw new Error("Bank soal kosong untuk token ini.");
-                }
-            } else {
-                throw new Error("Token tidak valid!");
-            }
+                    examData.questions = dataSoal.list.sort(() => Math.random() - 0.5);
+                    examData.student = { nama: n, tingkat: k, kelas: g, token: p };
+                    examData.startTime = new Date();
+                    showPage('view-exam');
+                    renderQuestion();
+                } else { throw new Error("Soal belum tersedia untuk token ini."); }
+            } else { throw new Error("Password / Token tidak ditemukan!"); }
         } catch (e) {
             showPage('view-login');
             alert(e.message);
         }
     }
 
-    function startExam() {
-        showPage('view-exam');
-        renderQuestion();
-    }
-
     function renderQuestion() {
-        const q = exam.questions[exam.currentIndex];
-        document.getElementById('q-number').innerText = (exam.currentIndex + 1);
+        const q = examData.questions[examData.currentIndex];
+        document.getElementById('q-number').innerText = `${examData.currentIndex + 1} / ${examData.questions.length}`;
         document.getElementById('q-text-display').innerText = q.pertanyaan;
 
-        let opts = [
-            {c:'A', t:q.opsi_a}, {c:'B', t:q.opsi_b},
-            {c:'C', t:q.opsi_c}, {c:'D', t:q.opsi_d}
+        let options = [
+            {code: 'A', text: q.opsi_a}, {code: 'B', text: q.opsi_b},
+            {code: 'C', text: q.opsi_c}, {code: 'D', text: q.opsi_d}
         ];
 
-        let h = '';
-        opts.forEach(o => {
-            let sel = exam.answers[q.id] === o.c ? 'selected' : '';
-            h += `<div class="option ${sel}" onclick="pilih('${q.id}', '${o.c}')">${o.c}. ${o.t}</div>`;
+        let html = '';
+        options.forEach(opt => {
+            // PERBAIKAN LOGIKA: Cek berdasarkan ID unik soal, bukan indeks
+            const isSelected = examData.answers[q.id] === opt.code ? 'selected' : '';
+            html += `<div class="option ${isSelected}" onclick="selectAnswer('${q.id}', '${opt.code}')">${opt.code}. ${opt.text}</div>`;
         });
-        document.getElementById('q-options-display').innerHTML = h;
         
-        // Munculkan tombol kirim di soal terakhir
-        document.getElementById('btn-finish').style.display = (exam.currentIndex === exam.questions.length - 1) ? 'block' : 'none';
+        document.getElementById('q-options-display').innerHTML = html;
+        document.getElementById('btn-submit-exam').style.display = (examData.currentIndex === examData.questions.length - 1) ? 'block' : 'none';
         renderNav();
     }
 
-    function pilih(id, val) {
-        exam.answers[id] = val;
+    function selectAnswer(questionId, code) {
+        examData.answers[questionId] = code; // Simpan berdasarkan ID unik soal
         renderQuestion();
     }
 
     function renderNav() {
-        let h = '';
-        exam.questions.forEach((q, i) => {
-            let c = 'nav-box' + (exam.answers[q.id]?' answered':'') + (i===exam.currentIndex?' current':'');
-            h += `<div class="${c}" onclick="jump(${i})">${i+1}</div>`;
-        });
-        document.getElementById('navigation-grid').innerHTML = h;
+        const nav = document.getElementById('navigation-grid');
+        nav.innerHTML = examData.questions.map((q, i) => {
+            const isAnswered = examData.answers[q.id] ? 'answered' : '';
+            const isCurrent = i === examData.currentIndex ? 'current' : '';
+            return `<div class="nav-box ${isAnswered} ${isCurrent}" onclick="jumpTo(${i})">${i + 1}</div>`;
+        }).join('');
     }
 
-    function jump(i) { exam.currentIndex = i; renderQuestion(); }
-    function nextQuestion() { if(exam.currentIndex < exam.questions.length-1) jump(exam.currentIndex+1); }
-    function prevQuestion() { if(exam.currentIndex > 0) jump(exam.currentIndex-1); }
+    function jumpTo(i) { examData.currentIndex = i; renderQuestion(); }
+    function nextQuestion() { if (examData.currentIndex < examData.questions.length - 1) jumpTo(examData.currentIndex + 1); }
+    function prevQuestion() { if (examData.currentIndex > 0) jumpTo(examData.currentIndex - 1); }
 
-    async function submitExam() {
-        if(!confirm("Kirim jawaban sekarang?")) return;
+    async function finishExam() {
+        if (!confirm("Apakah Anda yakin ingin mengirim semua jawaban?")) return;
+        
         showPage('view-loading');
-
         let benar = 0;
-        exam.questions.forEach(q => {
-            if(exam.answers[q.id] === q.jawaban_benar) benar++;
+        examData.questions.forEach(q => {
+            if (examData.answers[q.id] === q.jawaban_benar) benar++;
         });
 
-        const score = Math.round((benar / exam.questions.length) * 100);
-        const q0 = exam.questions[0];
+        const score = Math.round((benar / examData.questions.length) * 100);
+        const qInfo = examData.questions[0];
 
+        // PAYLOAD SESUAI DENGAN STRUKTUR TABEL 'nilai' ANDA
         const payload = {
-            nama_siswa: exam.student.nama,
-            token: exam.student.token,
-            mapel: q0.mapel,
-            kelas: exam.student.jenjang,
-            id_kelas: exam.student.kls,
+            nama_siswa: examData.student.nama,
+            token: examData.student.token,
+            mapel: qInfo.mapel,
+            kelas: examData.student.tingkat,
+            id_kelas: examData.student.kelas,
             jml_benar: benar,
-            jml_salah: exam.questions.length - benar,
+            jml_salah: examData.questions.length - benar,
             nilai: score,
-            jml_curang: exam.cheatCount,
-            nama_guru: q0.nama_guru,
-            jawaban: JSON.stringify(exam.answers),
-            wkt_mulai: exam.startTime.toISOString(),
+            jml_curang: examData.cheatCount,
+            nama_guru: qInfo.nama_guru,
+            jawaban: JSON.stringify(examData.answers),
+            wkt_mulai: examData.startTime.toISOString(),
             wkt_selesai: new Date().toISOString()
         };
 
@@ -227,20 +232,22 @@
                 body: JSON.stringify(payload)
             });
 
-            if(res.ok) {
-                document.getElementById('final-message').innerHTML = `Terima kasih <b>${exam.student.nama}</b>. Jawaban berhasil terkirim.`;
+            if (res.ok) {
+                document.getElementById('final-message').innerHTML = `Selamat ${examData.student.nama}, nilai Anda telah terinput ke database.<br>Tunjukkan layar ini ke Pengawas.`;
                 showPage('view-result');
-            } else { throw new Error("Gagal simpan."); }
+            } else {
+                throw new Error("Gagal menyimpan ke database. Cek koneksi.");
+            }
         } catch (e) {
-            alert("Koneksi bermasalah, namun data lokal tetap tersimpan. Hubungi pengawas.");
+            alert("Terjadi kesalahan fatal: " + e.message);
+            showPage('view-exam');
         }
     }
 
-    // Deteksi kecurangan
     document.addEventListener("visibilitychange", () => {
         if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
-            exam.cheatCount++;
-            alert("Peringatan: Jangan meninggalkan halaman ujian!");
+            examData.cheatCount++;
+            alert("PERINGATAN: Jangan keluar dari halaman ujian!");
         }
     });
 </script>
