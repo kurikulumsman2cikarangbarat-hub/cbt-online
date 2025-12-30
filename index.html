@@ -2,305 +2,90 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT Online - Terintegrasi</title>
+    <title>Simulasi CBT - Data Jokowi</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --gray: #6c757d; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
-        .container { max-width: 900px; margin: 20px auto; padding: 10px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        
-        /* Utility */
-        .hidden { display: none !important; }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-primary { background: var(--primary); }
-        .btn-success { background: var(--success); }
-        
-        /* Login & Pakta */
-        .form-group { margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        
-        /* Layout Ujian */
-        .exam-layout { display: flex; gap: 20px; flex-wrap: wrap; }
-        .main-content { flex: 2; min-width: 300px; }
-        .sidebar { flex: 1; min-width: 250px; }
-        
-        /* Grid Navigasi */
-        .grid-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
-        .nav-item { padding: 10px; text-align: center; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: #eee; font-size: 14px; }
-        .nav-item.answered { background: var(--primary); color: white; border-color: var(--primary); }
-        .nav-item.active { border: 2px solid #000; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
-        
-        /* Soal & Opsi */
-        .option-item { border: 2px solid #eee; padding: 15px; margin: 10px 0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; }
-        .option-item:hover { background: #f8f9fa; }
-        .option-item.selected { border-color: var(--primary); background: #e7f1ff; }
-        .soal-img { max-width: 100%; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; }
-        
-        /* Responsiveness */
-        @media (max-width: 600px) { .exam-layout { flex-direction: column; } }
+        body { font-family: sans-serif; background: #eef2f7; padding: 40px; display: flex; justify-content: center; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 400px; }
+        .info-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; background: #f9f9f9; }
+        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        label { font-size: 12px; color: #666; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="section-login" class="card">
-        <h2 style="text-align:center">Ujian Online CBT</h2>
-        <div class="form-group"><input type="text" id="nama_siswa" placeholder="Nama Lengkap Siswa"></div>
-        <div class="form-group">
-            <select id="jenjang" onchange="updateKelas()">
-                <option value="">-- Pilih Jenjang --</option>
-                <option value="X">X</option>
-                <option value="XI">XI</option>
-                <option value="XII">XII</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <select id="id_kelas">
-                <option value="">-- Pilih Kelas --</option>
-            </select>
-        </div>
-        <div class="form-group"><input type="text" id="token" placeholder="Masukkan Token Ujian"></div>
-        <button class="btn btn-primary" style="width:100%" onclick="authLogin()">Masuk Ke Ruang Tunggu</button>
+<div class="card">
+    <h2 style="text-align: center; margin-top: 0;">Simulasi Login CBT</h2>
+    <div class="info-box">
+        <strong>Mode Simulasi Aktif:</strong><br>
+        Data otomatis terisi sesuai permintaan Anda.
     </div>
 
-    <div id="section-pakta" class="card hidden">
-        <h3>Pakta Integritas & Peraturan</h3>
-        <p>Saya, <b id="display-nama"></b> dari kelas <b id="display-kelas"></b>, menyatakan:</p>
-        <ol>
-            <li>Akan mengerjakan ujian dengan <b>JUJUR</b> dan penuh tanggung jawab.</li>
-            <li>Dilarang membuka tab baru atau aplikasi lain selama ujian.</li>
-            <li>Sistem akan mendeteksi kecurangan jika Anda meninggalkan halaman ini:
-                <ul>
-                    <li>1x & 2x: Peringatan keras.</li>
-                    <li>3x: Anda akan otomatis dikeluarkan dari ujian.</li>
-                </ul>
-            </li>
-        </ol>
-        <hr>
-        <label><input type="checkbox" id="check-setuju"> Saya mengerti dan akan patuh.</label><br><br>
-        <button class="btn btn-success" onclick="startExam()">Mulai Ujian Sekarang</button>
-    </div>
+    <label>Nama Siswa</label>
+    <input type="text" id="nama_siswa" value="Jokowi">
 
-    <div id="section-exam" class="hidden">
-        <div class="exam-layout">
-            <div class="main-content card">
-                <div id="soal-container">
-                    </div>
-                <hr>
-                <div style="display: flex; justify-content: space-between;">
-                    <button class="btn btn-primary" onclick="changeSoal(-1)">Kembali</button>
-                    <button id="btn-next" class="btn btn-primary" onclick="changeSoal(1)">Lanjut</button>
-                    <button id="btn-finish" class="btn btn-success hidden" onclick="submitExam()">Selesai & Kirim</button>
-                </div>
-            </div>
-            
-            <div class="sidebar card">
-                <h4 style="margin-top:0">Navigasi Soal</h4>
-                <div id="timer" style="font-weight:bold; color:var(--danger); margin-bottom:10px;"></div>
-                <div class="grid-nav" id="grid-nav"></div>
-            </div>
-        </div>
+    <label>Jenjang</label>
+    <select id="jenjang">
+        <option value="X">X</option>
+        <option value="XI">XI</option>
+        <option value="XII" selected>XII</option>
+    </select>
+
+    <label>ID Kelas</label>
+    <select id="id_kelas">
+        <option value="XII-A" selected>XII-A</option>
+        <option value="XII-B">XII-B</option>
+    </select>
+
+    <label>Token Ujian</label>
+    <input type="text" id="token" value="LLL">
+
+    <button onclick="simulasiProses()">Masuk Ujian (Simulasi)</button>
+    
+    <div id="status" style="margin-top: 15px; font-size: 13px; text-align: center; color: #28a745; display: none;">
+        Mengecek token "LLL" ke tabel <b>ujian</b>...
     </div>
 </div>
 
 <script>
-    const WORKER_URL = "https://URL-WORKER-ANDA.workers.dev"; // GANTI INI
-    
-    let state = {
-        siswa: {},
-        questions: [],
-        currentIdx: 0,
-        answers: {}, // Format: { question_id: "A" }
-        wktMulai: null,
-        curangCount: 0
-    };
+    const WORKER_URL = "https://URL-WORKER-ANDA.workers.dev"; // Pastikan ganti dengan URL Worker asli
 
-    const daftarKelas = {
-        "X": ["X-A", "X-B", "X-C", "X-D", "X-E", "X-F"],
-        "XI": ["XI-A", "XI-B", "XI-C", "XI-D", "XI-E", "XI-F", "XI-G"],
-        "XII": ["XII-A", "XII-B", "XII-C", "XII-D", "XII-E", "XII-F", "XII-G"]
-    };
-
-    function updateKelas() {
-        const jenjang = document.getElementById('jenjang').value;
-        const klsSelect = document.getElementById('id_kelas');
-        klsSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-        if (jenjang) {
-            daftarKelas[jenjang].forEach(k => {
-                let opt = document.createElement('option');
-                opt.value = k; opt.innerHTML = k;
-                klsSelect.appendChild(opt);
-            });
-        }
-    }
-
-    // AUTH LOGIN
-    async function authLogin() {
-        const nama = document.getElementById('nama_siswa').value;
-        const jenjang = document.getElementById('jenjang').value;
-        const id_kls = document.getElementById('id_kelas').value;
-        const token = document.getElementById('token').value.trim();
-
-        if (!nama || !token || !id_kls) return alert("Mohon lengkapi data!");
-
-        try {
-            const res = await fetch(`${WORKER_URL}/api/ujian?where=(token,eq,${token})`);
-            const data = await res.json();
-
-            if (data.list && data.list.length > 0) {
-                state.siswa = { nama, jenjang, id_kls, token };
-                document.getElementById('display-nama').innerText = nama;
-                document.getElementById('display-kelas').innerText = id_kls;
-                
-                showSection('section-pakta');
-            } else {
-                alert("Token tidak valid!");
-            }
-        } catch (e) { alert("Error koneksi database!"); }
-    }
-
-    // MULAI UJIAN
-    async function startExam() {
-        if (!document.getElementById('check-setuju').checked) return alert("Centang pakta integritas!");
-
-        state.wktMulai = new Date();
-        showSection('section-exam');
+    async function simulasiProses() {
+        const btn = document.querySelector('button');
+        const status = document.getElementById('status');
         
-        // Deteksi Pindah Tab
-        document.addEventListener("visibilitychange", handleCheat);
+        btn.disabled = true;
+        btn.innerText = "Memproses...";
+        status.style.display = "block";
 
-        try {
-            const res = await fetch(`${WORKER_URL}/api/bank_soal?where=(token,eq,${state.siswa.token})&limit=1000`);
-            const data = await res.json();
-            
-            // Acak Soal
-            state.questions = data.list.sort(() => Math.random() - 0.5);
-            renderSoal();
-            renderNav();
-        } catch (e) { alert("Gagal mengambil bank soal!"); }
-    }
-
-    function handleCheat() {
-        if (document.hidden) {
-            state.curangCount++;
-            if (state.curangCount === 1) alert("PERINGATAN 1: Jangan tinggalkan halaman ujian!");
-            else if (state.curangCount === 2) alert("PERINGATAN KERAS: Sekali lagi Anda akan didiskualifikasi!");
-            else if (state.curangCount >= 3) {
-                alert("Anda didiskualifikasi!");
-                location.reload();
-            }
-        }
-    }
-
-    function renderSoal() {
-        const container = document.getElementById('soal-container');
-        const q = state.questions[state.currentIdx];
-        
-        // Acak Opsi
-        const rawOptions = [
-            { key: 'A', text: q.opsi_a }, { key: 'B', text: q.opsi_b },
-            { key: 'C', text: q.opsi_c }, { key: 'D', text: q.opsi_d }
-        ];
-        // Kita simpan urutan acak opsi agar tidak berubah saat render ulang
-        if(!q.shuffledOptions) q.shuffledOptions = rawOptions.sort(() => Math.random() - 0.5);
-
-        let imgHtml = q.img_link ? `<img class="soal-img" src="https://drive.google.com/uc?export=view&id=${q.img_link}">` : '';
-        
-        let html = `
-            <div style="font-size: 0.9em; color: #666">Soal No. ${state.currentIdx + 1} / ${state.questions.length}</div>
-            <p style="font-size: 1.1em; font-weight: 500">${q.pertanyaan}</p>
-            ${imgHtml}
-            <div class="options">
-                ${q.shuffledOptions.map(opt => `
-                    <div class="option-item ${state.answers[q.id] === opt.key ? 'selected' : ''}" 
-                         onclick="selectAnswer('${q.id}', '${opt.key}')">
-                        <b>${opt.key}.</b> &nbsp; ${opt.text}
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        container.innerHTML = html;
-
-        // Navigasi Button
-        document.getElementById('btn-next').classList.toggle('hidden', state.currentIdx === state.questions.length - 1);
-        document.getElementById('btn-finish').classList.toggle('hidden', state.currentIdx !== state.questions.length - 1);
-    }
-
-    function selectAnswer(qId, val) {
-        state.answers[qId] = val;
-        renderSoal();
-        renderNav();
-    }
-
-    function renderNav() {
-        const nav = document.getElementById('grid-nav');
-        nav.innerHTML = state.questions.map((q, i) => `
-            <div class="nav-item ${state.answers[q.id] ? 'answered' : ''} ${state.currentIdx === i ? 'active' : ''}" 
-                 onclick="goToSoal(${i})">
-                ${i + 1}
-            </div>
-        `).join('');
-    }
-
-    function goToSoal(i) { state.currentIdx = i; renderSoal(); renderNav(); }
-    function changeSoal(dir) { 
-        let newIdx = state.currentIdx + dir;
-        if(newIdx >= 0 && newIdx < state.questions.length) {
-            state.currentIdx = newIdx;
-            renderSoal();
-            renderNav();
-        }
-    }
-
-    async function submitExam() {
-        if (!confirm("Sudah selesai? Jawaban akan dikirim ke sistem.")) return;
-
-        let benar = 0;
-        state.questions.forEach(q => {
-            if (state.answers[q.id] === q.jawaban_benar) benar++;
-        });
-
-        const wktSelesai = new Date();
-        const durasiMenit = Math.floor((wktSelesai - state.wktMulai) / 60000);
-        const q0 = state.questions[0];
-
-        const payload = {
-            nama_siswa: state.siswa.nama,
-            token: state.siswa.token,
-            mapel: q0.mapel,
-            kelas: state.siswa.jenjang,
-            id_kelas: state.siswa.id_kls,
-            jml_benar: benar,
-            jml_salah: state.questions.length - benar,
-            nilai: (benar / state.questions.length) * 100,
-            jml_curang: state.curangCount,
-            nama_guru: q0.nama_guru,
-            jawaban: JSON.stringify(state.answers),
-            wkt_mulai: state.wktMulai.toISOString(),
-            wkt_selesai: wktSelesai.toISOString(),
-            wkt_diberikan: q0.ujian || "-",
-            wkt_digunakan: durasiMenit + " Menit"
+        const data = {
+            nama: document.getElementById('nama_siswa').value,
+            kelas: document.getElementById('jenjang').value,
+            id_kelas: document.getElementById('id_kelas').value,
+            token: document.getElementById('token').value
         };
 
-        try {
-            const res = await fetch(`${WORKER_URL}/api/nilai`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) {
-                alert("Berhasil! Nilai Anda: " + payload.nilai);
-                location.reload();
-            }
-        } catch (e) { alert("Gagal mengirim data nilai!"); }
-    }
+        console.log("Mengirim Request ke Worker:", data);
 
-    function showSection(id) {
-        document.getElementById('section-login').classList.add('hidden');
-        document.getElementById('section-pakta').classList.add('hidden');
-        document.getElementById('section-exam').classList.add('hidden');
-        document.getElementById(id).classList.remove('hidden');
+        try {
+            // Logika: Cek apakah token "LLL" ada di tabel 'ujian'
+            const response = await fetch(`${WORKER_URL}/api/ujian?where=(token,eq,${data.token})`);
+            const result = await response.json();
+
+            if (result.list && result.list.length > 0) {
+                alert(`BERHASIL!\nToken ${data.token} ditemukan.\n\nSiswa: ${data.nama}\nKelas: ${data.id_kelas}\n\nLanjut ke Pakta Integritas...`);
+                // Di sini biasanya pindah ke section ujian
+            } else {
+                alert(`GAGAL!\nToken "${data.token}" tidak ditemukan di tabel 'ujian' NocoDB.\n\nPastikan Anda sudah membuat baris di tabel ujian dengan token LLL.`);
+            }
+        } catch (error) {
+            alert("Error Koneksi Database!\nPeriksa apakah Worker sudah berjalan dan URL benar.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Masuk Ujian (Simulasi)";
+            status.style.display = "none";
+        }
     }
 </script>
 
