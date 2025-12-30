@@ -5,25 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CBT SMAN 2 Cikarang Barat</title>
     <style>
-        /* CSS ASLI */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; padding: 15px; user-select: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f0f2f5; display: flex; justify-content: center; align-items: center; padding: 15px; user-select: none; }
         .container { width: 100%; max-width: 650px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-height: 600px; display: flex; flex-direction: column; overflow: hidden; }
-        .header { background: #1a73e8; color: white; padding: 25px; text-align: center; }
+        .header { background: #1a73e8; color: white; padding: 20px; text-align: center; }
         .page { padding: 25px; display: none; flex-grow: 1; flex-direction: column; }
         .page.active { display: flex; }
-        label { font-weight: 600; display: block; margin-bottom: 8px; color: #444; }
-        input, select { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 10px; font-size: 1rem; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 16px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+        input, select { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; }
+        .btn { width: 100%; padding: 16px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
         .timer-info { padding: 12px 20px; display: flex; justify-content: space-between; font-weight: bold; color: #1a73e8; background: #e8f0fe; }
-        .control-bar { padding: 15px 25px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
-        .btn-circle { width: 50px; height: 50px; border-radius: 50%; border: none; background: #1a73e8; color: white; font-size: 1.5rem; cursor: pointer; }
-        .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 10px; padding: 15px; background: #f8f9fa; max-height: 120px; overflow-y: auto; }
-        .nav-box { height: 40px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; }
-        .nav-box.answered { background: #1a73e8; color: white; }
-        .nav-box.current { border: 2px solid #f57c00; font-weight: bold; }
+        .q-image { width: 100%; max-height: 250px; object-fit: contain; margin-bottom: 15px; border-radius: 10px; display: none; }
         .option { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; text-align: left; cursor: pointer; }
         .option.selected { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 600; }
+        .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 10px; padding: 15px; background: #f8f9fa; max-height: 100px; overflow-y: auto; }
+        .nav-box { height: 35px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+        .nav-box.answered { background: #1a73e8; color: white; }
+        .nav-box.current { border: 2px solid #f57c00; font-weight: bold; }
+        .control-bar { padding: 15px 25px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
+        .btn-circle { width: 45px; height: 45px; border-radius: 50%; border: none; background: #1a73e8; color: white; cursor: pointer; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -32,252 +31,189 @@
 
 <div class="container">
     <div id="view-login" class="page active">
-        <div class="header" style="margin: -25px -25px 25px -25px;">
+        <div class="header" style="margin: -25px -25px 25px -25px; margin-bottom: 20px;">
             <h2>CBT SMAN 2 Cikarang Barat</h2>
-            <p>Sistem Ujian Terintegrasi</p>
         </div>
-        <label>Nama Peserta</label>
-        <input type="text" id="input-nama" placeholder="Nama Lengkap..." autocomplete="off">
+        <label>Nama Lengkap</label>
+        <input type="text" id="input-nama" placeholder="Nama..." autocomplete="off">
         <label>Tingkat</label>
         <select id="input-kelas" onchange="filterKelompok()">
             <option value="" disabled selected>-- Pilih Tingkat --</option>
-            <option value="X">Kelas X</option>
-            <option value="XI">Kelas XI</option>
-            <option value="XII">Kelas XII</option>
+            <option value="X">Kelas X</option><option value="XI">Kelas XI</option><option value="XII">Kelas XII</option>
         </select>
-        <label>Kelas (Rombel)</label>
+        <label>Rombel (ID Kelas)</label>
         <select id="input-kelompok"><option value="" disabled selected>-- Pilih Kelas --</option></select>
-        <label>Token Ujian</label>
+        <label>Token</label>
         <input type="text" id="input-token" placeholder="Masukkan Token" autocomplete="off">
         <button class="btn" onclick="login()">MULAI UJIAN</button>
     </div>
 
     <div id="view-loading" class="page" style="text-align: center; justify-content: center;">
         <div class="loader"></div>
-        <h3 id="loading-text">Menghubungkan ke Server...</h3>
+        <h3 id="loading-text">Memuat Soal...</h3>
     </div>
 
     <div id="view-exam" class="page" style="padding: 0;">
         <div class="timer-info">
             <span>Soal <span id="q-number">1</span></span>
-            <span id="timer-display" style="color: #d32f2f;">00:00</span>
+            <span id="timer-display">00:00</span>
         </div>
-        <div style="padding: 25px; flex-grow: 1; overflow-y: auto;">
-            <div id="q-text" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px;"></div>
+        <div style="padding: 20px; flex-grow: 1; overflow-y: auto;">
+            <img id="q-img" class="q-image" src="" alt="Gambar Soal">
+            <div id="q-text" style="font-size: 1.1rem; margin-bottom: 20px; font-weight: 500;"></div>
             <div id="q-options"></div>
         </div>
         <div class="control-bar">
             <button class="btn-circle" onclick="prevQ()">❮</button>
-            <button id="btn-submit" class="btn" style="width: auto; padding: 10px 20px; background: #27ae60; display: none;" onclick="submitExam()">KIRIM</button>
+            <button id="btn-submit" class="btn" style="width: auto; padding: 0 20px; background: #27ae60; display: none;" onclick="submitExam()">KIRIM</button>
             <button class="btn-circle" onclick="nextQ()">❯</button>
         </div>
         <div class="nav-grid" id="nav-grid"></div>
     </div>
 
     <div id="view-result" class="page" style="text-align: center; justify-content: center;">
-        <div style="background: #e8f5e9; padding: 30px; border-radius: 15px; border: 2px solid #4caf50;">
-            <span style="font-size: 50px;">✅</span>
-            <div id="final-msg" style="margin-top: 15px; color: #2e7d32; font-weight: bold;"></div>
-        </div>
-        <button onclick="location.reload()" class="btn" style="margin-top: 20px; background: #666;">Keluar</button>
+        <h2 style="color: #2e7d32;">Ujian Selesai</h2>
+        <div id="final-msg" style="margin: 20px 0; font-size: 1.1rem;"></div>
+        <button onclick="location.reload()" class="btn" style="background: #666;">Tutup</button>
     </div>
 </div>
 
 <script>
-    const API_URL = "https://nocob-proxy.kurikulum-sman2cikarangbarat.workers.dev"; 
-
-    let exam = {
-        questions: [],
-        currentIndex: 0,
-        answers: {}, 
-        student: {},
-        config: {},
-        timer: null,
-        totalDuration: 0,
-        timeLeft: 0,
-        cheatCount: 0,
-        startTimeObj: null
-    };
+    const API_URL = "https://nocob-proxy.kurikulum-sman2cikarangbarat.workers.dev";
+    let exam = { questions: [], currentIndex: 0, answers: {}, student: {}, config: {}, timeLeft: 0, timer: null, start: null };
 
     function filterKelompok() {
         const t = document.getElementById('input-kelas').value;
         const s = document.getElementById('input-kelompok');
         s.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
-        let list = [];
-        if (t === "X") list = ["X - A", "X - B", "X - C", "X - D", "X - E", "X - F"];
-        else if (t === "XI") list = ["XI - A", "XI - B", "XI - C", "XI - D", "XI - E", "XI - F", "XI - G"];
-        else if (t === "XII") list = ["XII - A", "XII - B", "XII - C", "XII - D", "XII - E", "XII - F", "XII - G"];
+        let list = t === "X" ? ["X-A","X-B","X-C","X-D","X-E","X-F"] : (t === "XI" ? ["XI-A","XI-B","XI-C","XI-D","XI-E","XI-F","XI-G"] : ["XII-A","XII-B","XII-C","XII-D","XII-E","XII-F","XII-G"]);
         list.forEach(k => { let o = document.createElement("option"); o.value=k; o.text=k; s.appendChild(o); });
     }
 
-    function showPage(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    }
-
     async function login() {
-        const n = document.getElementById('input-nama').value;
-        const k = document.getElementById('input-kelas').value;
-        const g = document.getElementById('input-kelompok').value; 
-        const t = document.getElementById('input-token').value.trim();
-
+        const n = document.getElementById('input-nama').value, k = document.getElementById('input-kelas').value, g = document.getElementById('input-kelompok').value, t = document.getElementById('input-token').value.trim();
         if(!n || !k || !g || !t) return alert("Lengkapi data!");
-        showPage('view-loading');
-        
+        document.getElementById('view-login').style.display = 'none';
+        document.getElementById('view-loading').classList.add('active');
+
         try {
             const resUjian = await fetch(`${API_URL}/api/ujian?where=(token,eq,${t})`);
-            const dataUjian = await resUjian.json();
+            const dUjian = await resUjian.json();
+            if(!dUjian.list.length) throw new Error("Token salah!");
 
-            if(dataUjian.list && dataUjian.list.length > 0) {
-                const info = dataUjian.list[0];
-                const resSoal = await fetch(`${API_URL}/api/bank_soal?where=(token,eq,${t})`);
-                const dataSoal = await resSoal.json();
+            const resSoal = await fetch(`${API_URL}/api/bank_soal?where=(token,eq,${t})`);
+            const dSoal = await resSoal.json();
+            if(!dSoal.list.length) throw new Error("Soal belum tersedia!");
 
-                if(dataSoal.list && dataSoal.list.length > 0) {
-                    exam.questions = dataSoal.list.sort(() => Math.random() - 0.5);
-                    exam.student = { nama: n, tingkat: k, rombel: g, token: t };
-                    exam.config = { mapel: info.mapel, guru: info.nama_guru };
-                    exam.totalDuration = (parseInt(info.durasi) || 90) * 60;
-                    exam.timeLeft = exam.totalDuration;
-                    exam.startTimeObj = new Date();
-                    
-                    showPage('view-exam');
-                    renderQuestion();
-                    startTimer();
-                } else { throw new Error("Soal belum tersedia!"); }
-            } else { throw new Error("Token salah!"); }
+            exam.questions = dSoal.list.sort(() => Math.random() - 0.5);
+            exam.student = { nama: n, kelas: k, id_kelas: g, token: t };
+            exam.config = { mapel: dUjian.list[0].mapel, guru: dUjian.list[0].nama_guru };
+            exam.timeLeft = (parseInt(dUjian.list[0].durasi) || 90) * 60;
+            exam.start = new Date();
+
+            document.getElementById('view-loading').classList.remove('active');
+            document.getElementById('view-exam').classList.add('active');
+            renderQuestion();
+            startTimer();
         } catch(e) {
             alert(e.message);
-            showPage('view-login');
+            location.reload();
         }
     }
 
     function startTimer() {
         exam.timer = setInterval(() => {
             exam.timeLeft--;
-            let m = Math.floor(exam.timeLeft / 60).toString().padStart(2, '0');
-            let s = (exam.timeLeft % 60).toString().padStart(2, '0');
+            let m = Math.floor(exam.timeLeft/60).toString().padStart(2,'0'), s = (exam.timeLeft%60).toString().padStart(2,'0');
             document.getElementById('timer-display').innerText = `${m}:${s}`;
-            if(exam.timeLeft <= 0) { clearInterval(exam.timer); submitExam(); }
+            if(exam.timeLeft <= 0) submitExam();
         }, 1000);
     }
 
     function renderQuestion() {
         const q = exam.questions[exam.currentIndex];
+        const qId = q.Id || q.id;
         document.getElementById('q-number').innerText = `${exam.currentIndex + 1} / ${exam.questions.length}`;
-        document.getElementById('q-text').innerText = q.pertanyaan;
+        
+        // MENAMPILKAN SOAL (KOLOM 'soal')
+        document.getElementById('q-text').innerHTML = q.soal;
 
-        let opts = [
-            {id: 'A', t: q.opsi_a}, {id: 'B', t: q.opsi_b}, {id: 'C', t: q.opsi_c}, 
-            {id: 'D', t: q.opsi_d}, {id: 'E', t: q.opsi_e}
-        ];
+        // MENAMPILKAN GAMBAR (KOLOM 'img_link')
+        const imgTag = document.getElementById('q-img');
+        if(q.img_link && q.img_link.trim() !== "") {
+            imgTag.src = q.img_link;
+            imgTag.style.display = 'block';
+        } else {
+            imgTag.style.display = 'none';
+        }
 
         let html = '';
-        opts.forEach(o => {
+        [{c:'A', t:q.opsi_a}, {c:'B', t:q.opsi_b}, {c:'C', t:q.opsi_c}, {c:'D', t:q.opsi_d}, {c:'E', t:q.opsi_e}].forEach(o => {
             if(o.t) {
-                // KUNCI PERBAIKAN: Gunakan ID unik soal (q.Id atau q.id) agar tidak menjawab semua
-                const questionKey = q.Id || q.id;
-                const isSelected = exam.answers[questionKey] === o.t ? 'selected' : '';
-                html += `<div class="option ${isSelected}" onclick="selectAns('${questionKey}', '${o.t}')">${o.id}. ${o.t}</div>`;
+                const sel = exam.answers[qId] === o.t ? 'selected' : '';
+                html += `<div class="option ${sel}" onclick="selectAns('${qId}', '${o.t}')">${o.c}. ${o.t}</div>`;
             }
         });
-
         document.getElementById('q-options').innerHTML = html;
         document.getElementById('btn-submit').style.display = (exam.currentIndex === exam.questions.length - 1) ? 'block' : 'none';
         renderNav();
     }
 
-    function selectAns(qId, textVal) {
-        exam.answers[qId] = textVal;
-        renderQuestion();
-    }
-
+    function selectAns(id, val) { exam.answers[id] = val; renderQuestion(); }
     function renderNav() {
-        const grid = document.getElementById('nav-grid');
-        grid.innerHTML = exam.questions.map((q, i) => {
-            const qId = q.Id || q.id;
-            const ans = exam.answers[qId] ? 'answered' : '';
-            const cur = i === exam.currentIndex ? 'current' : '';
-            return `<div class="nav-box ${ans} ${cur}" onclick="jump(${i})">${i+1}</div>`;
+        document.getElementById('nav-grid').innerHTML = exam.questions.map((q, i) => {
+            const id = q.Id || q.id;
+            return `<div class="nav-box ${exam.answers[id] ? 'answered' : ''} ${i === exam.currentIndex ? 'current' : ''}" onclick="jump(${i})">${i+1}</div>`;
         }).join('');
     }
-
     function jump(i) { exam.currentIndex = i; renderQuestion(); }
     function nextQ() { if(exam.currentIndex < exam.questions.length - 1) jump(exam.currentIndex + 1); }
     function prevQ() { if(exam.currentIndex > 0) jump(exam.currentIndex - 1); }
 
-    function getFormattedDate(date) {
-        return date.getFullYear() + "-" + 
-               ("0" + (date.getMonth() + 1)).slice(-2) + "-" + 
-               ("0" + date.getDate()).slice(-2) + " " + 
-               ("0" + date.getHours()).slice(-2) + ":" + 
-               ("0" + date.getMinutes()).slice(-2) + ":" + 
-               ("0" + date.getSeconds()).slice(-2);
-    }
-
     async function submitExam() {
-        if(exam.timeLeft > 0 && !confirm("Kirim sekarang?")) return;
-        
+        if(exam.timeLeft > 0 && !confirm("Kirim jawaban?")) return;
         clearInterval(exam.timer);
-        showPage('view-loading');
-        
-        let benar = 0;
-        exam.questions.forEach(q => {
-            const qId = q.Id || q.id;
-            const jawabanSiswa = exam.answers[qId];
-            
-            // PERBAIKAN LOGIKA: Bandingkan Teks Jawaban Siswa dengan Teks Jawaban Benar
-            // Asumsi kolom jawaban benar di bank_soal berisi TEKS (bukan huruf A/B/C)
-            if(jawabanSiswa === q.jawaban_benar) benar++;
-        });
+        document.getElementById('view-exam').style.display = 'none';
+        document.getElementById('view-loading').classList.add('active');
+        document.getElementById('loading-text').innerText = "Mengirim...";
 
-        const score = Math.round((benar / exam.questions.length) * 100);
-        const endTimeObj = new Date();
+        let benar = 0;
+        exam.questions.forEach(q => { if(exam.answers[q.Id || q.id] === q.jawaban_benar) benar++; });
         
-        // Hitung wkt_digunakan dalam menit
-        const diffMs = endTimeObj - exam.startTimeObj;
-        const wktDigunakan = Math.floor(diffMs / 60000) + " Menit";
+        const score = Math.round((benar / exam.questions.length) * 100);
+        const now = new Date();
+        const diff = Math.floor((now - exam.start) / 60000);
 
         const payload = {
             nama_siswa: exam.student.nama,
             token: exam.student.token,
             mapel: exam.config.mapel,
-            kelas: exam.student.tingkat,
-            id_kelas: exam.student.rombel,
+            kelas: exam.student.kelas,
+            id_kelas: exam.student.id_kelas,
             jml_benar: benar,
             jml_salah: exam.questions.length - benar,
             nilai: score,
-            jml_curang: exam.cheatCount,
             nama_guru: exam.config.guru,
             jawaban: JSON.stringify(exam.answers),
-            wkt_mulai: getFormattedDate(exam.startTimeObj),
-            wkt_selesai: getFormattedDate(endTimeObj),
-            wkt_digunakan: wktDigunakan // Menambahkan data durasi asli
+            wkt_mulai: exam.start.toISOString().slice(0,19).replace('T',' '),
+            wkt_selesai: now.toISOString().slice(0,19).replace('T',' '),
+            wkt_digunakan: diff + " Menit"
         };
 
         try {
-            const res = await fetch(`${API_URL}/api/nilai`, {
+            await fetch(`${API_URL}/api/nilai`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-
-            if(res.ok) {
-                document.getElementById('final-msg').innerHTML = `Berhasil Tersimpan.<br>Skor: ${score}<br>Waktu: ${wktDigunakan}`;
-                showPage('view-result');
-            } else { throw new Error(await res.text()); }
+            document.getElementById('view-loading').classList.remove('active');
+            document.getElementById('view-result').classList.add('active');
+            document.getElementById('final-msg').innerHTML = `Siswa: ${exam.student.nama}<br>Nilai: ${score}`;
         } catch(e) {
-            alert("Gagal: " + e.message);
-            showPage('view-exam');
-            startTimer();
+            alert("Gagal kirim, coba lagi!");
+            document.getElementById('view-exam').classList.add('active');
         }
     }
-
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
-            exam.cheatCount++;
-        }
-    });
 </script>
 </body>
 </html>
