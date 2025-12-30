@@ -8,8 +8,144 @@ let exam = {
     timeLeft: 0, 
     start: null, 
     optionStates: {}, 
-    cheatCount: 0 
+    cheatCount: 0,
+    isFullscreen: false,
+    fullscreenRequested: false
 };
+
+// ==================== FUNGSI FULLSCREEN ====================
+function requestFullscreen() {
+    const elem = document.documentElement;
+    
+    if (!exam.fullscreenRequested) {
+        showFullscreenModal();
+        exam.fullscreenRequested = true;
+        return;
+    }
+    
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen().then(() => {
+            exam.isFullscreen = true;
+            hideFullscreenModal();
+            showToast("✅ Mode fullscreen aktif");
+            checkFullscreenPeriodically();
+        }).catch(err => {
+            console.error('Fullscreen error:', err);
+            showToast("❌ Gagal masuk fullscreen. Tekan F11 manual");
+            // Tetap lanjut meski fullscreen gagal
+            setTimeout(() => {
+                hideFullscreenModal();
+                showWelcome();
+            }, 2000);
+        });
+    } else if (elem.webkitRequestFullscreen) { /* Safari */
+        elem.webkitRequestFullscreen().then(() => {
+            exam.isFullscreen = true;
+            hideFullscreenModal();
+            showToast("✅ Mode fullscreen aktif");
+            checkFullscreenPeriodically();
+        });
+    } else if (elem.msRequestFullscreen) { /* IE11 */
+        elem.msRequestFullscreen().then(() => {
+            exam.isFullscreen = true;
+            hideFullscreenModal();
+            showToast("✅ Mode fullscreen aktif");
+            checkFullscreenPeriodically();
+        });
+    } else {
+        showToast("❌ Browser tidak support fullscreen. Tekan F11 manual");
+        setTimeout(() => {
+            hideFullscreenModal();
+            showWelcome();
+        }, 2000);
+    }
+}
+
+function exitFullscreen() {
+    if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => {
+            exam.isFullscreen = false;
+        });
+    } else if (document.webkitExitFullscreen) { /* Safari */
+        document.webkitExitFullscreen();
+        exam.isFullscreen = false;
+    } else if (document.msExitFullscreen) { /* IE11 */
+        document.msExitFullscreen();
+        exam.isFullscreen = false;
+    }
+}
+
+function exitFullscreenAndReload() {
+    exitFullscreen();
+    setTimeout(() => location.reload(), 500);
+}
+
+function checkFullscreenPeriodically() {
+    setInterval(() => {
+        const isFullscreen = !!(document.fullscreenElement || 
+                               document.webkitFullscreenElement || 
+                               document.msFullscreenElement);
+        
+        if (!isFullscreen && document.getElementById('view-exam').classList.contains('active')) {
+            exam.cheatCount++;
+            showToast(`⚠️ PERINGATAN ${exam.cheatCount}: Kembali ke fullscreen!`);
+            
+            if (exam.cheatCount >= 2) {
+                showFullscreenModal();
+            }
+            
+            if (exam.cheatCount >= 3) {
+                showToast("❌ Keluar fullscreen berkali-kali! Ujian diakhiri.");
+                setTimeout(() => submitData(), 2000);
+            }
+        }
+    }, 1000);
+}
+
+function showFullscreenModal() {
+    document.getElementById('modal-fullscreen').style.display = 'flex';
+}
+
+function hideFullscreenModal() {
+    document.getElementById('modal-fullscreen').style.display = 'none';
+}
+
+// Event listener untuk tombol fullscreen
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btn-fullscreen').addEventListener('click', requestFullscreen);
+    
+    // Deteksi jika user tekan F11 manual
+    document.addEventListener('keydown', function(e) {
+        if (e.keyCode === 122) { // F11
+            exam.isFullscreen = true;
+            hideFullscreenModal();
+            setTimeout(() => showWelcome(), 500);
+        }
+    });
+    
+    // Deteksi perubahan fullscreen state
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+});
+
+function handleFullscreenChange() {
+    const isFullscreenNow = !!(document.fullscreenElement || 
+                              document.webkitFullscreenElement || 
+                              document.msFullscreenElement);
+    
+    exam.isFullscreen = isFullscreenNow;
+    
+    if (!isFullscreenNow && document.getElementById('view-exam').classList.contains('active')) {
+        exam.cheatCount++;
+        showToast(`⚠️ PERINGATAN ${exam.cheatCount}: Kembali ke fullscreen!`);
+        
+        if (exam.cheatCount >= 3) {
+            showToast("❌ Keluar fullscreen berkali-kali! Ujian diakhiri.");
+            setTimeout(() => submitData(), 2000);
+        }
+    }
+}
 
 // ==================== FUNGSI KEAMANAN ====================
 function enableSecurityFeatures() {
@@ -22,6 +158,9 @@ function enableSecurityFeatures() {
     
     // Blokir shortcut keyboard
     document.addEventListener('keydown', function(e) {
+        // Izinkan F11 untuk fullscreen manual
+        if (e.keyCode === 122) return true;
+        
         // Blokir F12 (Inspect)
         if (e.keyCode === 123) {
             e.preventDefault();
@@ -126,25 +265,6 @@ function enableSecurityFeatures() {
     
     console.log('%c', devtools);
     console.clear();
-    
-    // Overlay untuk blokir inspect element
-    setInterval(function() {
-        const overlay = document.createElement('div');
-        overlay.id = 'block-overlay';
-        document.body.appendChild(overlay);
-        
-        // Deteksi jika overlay dihapus (indikasi inspect)
-        setTimeout(function() {
-            if (!document.getElementById('block-overlay')) {
-                showToast("⚠️ Aktivitas mencurigakan terdeteksi!");
-                exam.cheatCount++;
-                // Buat overlay lagi
-                const newOverlay = document.createElement('div');
-                newOverlay.id = 'block-overlay';
-                document.body.appendChild(newOverlay);
-            }
-        }, 100);
-    }, 1000);
 }
 
 // ==================== FUNGSI UTAMA ====================
@@ -191,6 +311,7 @@ function showWelcome() {
                 <li>Total soal: <strong>${exam.questions.length} butir</strong></li>
                 <li>Pilih jawaban dengan mengklik opsi yang tersedia</li>
                 <li>Klik KIRIM setelah semua soal terjawab</li>
+                <li><strong>Mode fullscreen aktif</strong> - jangan keluar dari mode ini</li>
             </ul>
         </div>
         <p style="font-style: italic; color: #666;">
@@ -262,8 +383,9 @@ async function login() {
         exam.timeLeft = (parseInt(dataUjian.list[0].durasi) || 90) * 60;
         exam.start = new Date();
 
-        // Tampilkan halaman sambutan
-        showWelcome();
+        // Tampilkan modal fullscreen
+        showFullscreenModal();
+        
     } catch(error) { 
         showToast(error.message); 
         setTimeout(() => location.reload(), 2000);
@@ -375,11 +497,10 @@ async function submitData() {
     hideConfirm();
     clearInterval(exam.timer);
     
-    // Blokir akses lebih ketat saat submit
-    document.addEventListener('keydown', function(e) {
-        e.preventDefault();
-        return false;
-    }, true);
+    // Exit fullscreen sebelum submit
+    if (exam.isFullscreen) {
+        exitFullscreen();
+    }
     
     document.getElementById('view-exam').style.display = 'none';
     document.getElementById('view-loading').classList.add('active');
