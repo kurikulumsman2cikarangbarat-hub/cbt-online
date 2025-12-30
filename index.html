@@ -8,80 +8,100 @@
 </head>
 <body>
 
-<div class="app-container">
+<div class="container">
+    <div id="toast"></div>
+    
+    <div id="modal-confirm" class="overlay">
+        <div class="modal-content">
+            <h3>Selesaikan Ujian?</h3>
+            <p>Pastikan semua jawaban sudah terisi. Jawaban tidak bisa diubah setelah dikirim.</p>
+            <button class="btn-primary btn-full" id="final-submit-btn">YA, KIRIM SEKARANG</button>
+            <button class="btn-link" id="cancel-confirm-btn">Kembali ke Soal</button>
+        </div>
+    </div>
+
     <div id="view-login" class="page active">
         <div class="header-banner">
             <h2>CBT SMAN 2</h2>
             <p>Cikarang Barat</p>
         </div>
-        <div class="form-wrapper">
+        <div class="form-container">
             <label>Nama Lengkap</label>
-            <input type="text" id="input-nama" placeholder="Sesuai daftar hadir...">
+            <input type="text" id="input-nama" placeholder="Ketik nama sesuai absen...">
+            
             <label>Tingkat</label>
             <select id="input-kelas">
-                <option value="" disabled selected>Pilih Tingkat</option>
+                <option value="" disabled selected>-- Pilih Tingkat --</option>
                 <option value="X">Kelas X</option>
                 <option value="XI">Kelas XI</option>
                 <option value="XII">Kelas XII</option>
             </select>
+            
             <label>Rombel</label>
-            <select id="input-kelompok"><option value="" disabled selected>Pilih Kelas</option></select>
+            <select id="input-kelompok"><option value="" disabled selected>-- Pilih Kelas --</option></select>
+            
             <label>Token Ujian</label>
-            <input type="text" id="input-token" placeholder="5 Digit Token">
-            <button id="login-btn" class="btn-primary">MASUK SISTEM</button>
+            <input type="text" id="input-token" placeholder="Masukkan 5 digit token">
+            
+            <button id="login-btn" class="btn-primary btn-full">MASUK SISTEM</button>
         </div>
     </div>
 
     <div id="view-welcome" class="page">
-        <div class="welcome-box">
-            <div class="user-avatar">👤</div>
+        <div class="welcome-card">
+            <div class="icon-user">👤</div>
             <h2 id="welcome-name">Halo, Siswa!</h2>
-            <span id="welcome-class" class="pill">Kelas --</span>
-            <div class="advice-card">
-                <p>Selamat menempuh ujian. Semoga sukses!</p>
-                <p><strong>Nasihat:</strong> Kerjakan dengan jujur dan teliti.</p>
+            <p id="welcome-class" class="badge">Kelas --</p>
+            <hr>
+            <div class="advice-box">
+                <p>Selamat menempuh ujian! Semoga mendapatkan nilai terbaik.</p>
+                <p><strong>Nasihat:</strong> Kerjakanlah dengan sungguh-sungguh dan junjung tinggi kejujuran.</p>
+                <p class="alert-text">⚠️ Peringatan: Sistem akan otomatis keluar jika Anda pindah tab/aplikasi sebanyak 2 kali.</p>
             </div>
-            <button id="start-exam-btn" class="btn-primary">MULAI UJIAN SEKARANG</button>
-            <button onclick="resetSesi()" class="btn-link">Bukan saya? Keluar</button>
+            <button id="start-exam-btn" class="btn-primary btn-full">MULAI UJIAN SEKARANG</button>
         </div>
     </div>
 
-    <div id="view-loading" class="page-center">
-        <div class="loader"></div>
-        <p id="loading-text">Menyiapkan data...</p>
+    <div id="view-loading" class="page centered">
+        <div class="spinner"></div>
+        <h3 id="loading-text">Menyiapkan Soal...</h3>
     </div>
 
     <div id="view-exam" class="page-exam">
         <div class="exam-header">
-            <div class="stat">
-                <span class="stat-label">SOAL</span>
-                <span id="q-number" class="stat-val">0/0</span>
+            <div class="info-left">
+                <span class="label">Soal</span>
+                <span id="q-number" class="value">0/0</span>
             </div>
-            <div class="stat text-right">
-                <span class="stat-label">SISA WAKTU</span>
-                <span id="timer-display" class="stat-val">00:00</span>
+            <div class="info-right">
+                <span class="label">Sisa Waktu</span>
+                <span id="timer-display" class="value">00:00</span>
             </div>
         </div>
-        <div class="exam-body">
-            <div id="q-img-container"></div>
+
+        <div class="question-content">
+            <img id="q-img" class="question-img">
             <div id="q-text" class="question-text"></div>
-            <div id="q-options" class="options-list"></div>
+            <div id="q-options" class="options-container"></div>
         </div>
+
         <div class="exam-footer">
-            <div class="nav-grid-mini" id="nav-grid"></div>
-            <div class="action-bar">
+            <div class="nav-buttons">
                 <button class="btn-nav" id="prev-btn">❮</button>
-                <button id="btn-finish" class="btn-submit">KIRIM</button>
+                <button id="btn-kirim-trigger" class="btn-submit-exam">KIRIM</button>
                 <button class="btn-nav" id="next-btn">❯</button>
+            </div>
+            <div class="nav-grid-container">
+                <div class="nav-grid" id="nav-grid"></div>
             </div>
         </div>
     </div>
 
-    <div id="view-result" class="page-center">
+    <div id="view-result" class="page centered">
         <div class="success-icon">✅</div>
-        <h2>Berhasil Terkirim</h2>
-        <div id="final-msg"></div>
-        <button onclick="resetSesi()" class="btn-primary" style="margin-top:20px">Keluar</button>
+        <h2>Terima Kasih</h2>
+        <div id="final-msg" class="result-msg"></div>
+        <button onclick="location.reload()" class="btn-secondary">Keluar Aplikasi</button>
     </div>
 </div>
 
