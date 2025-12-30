@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CBT SMAN 2 Cikarang Barat</title>
     <style>
+        /* CSS TETAP SAMA SEPERTI SEBELUMNYA */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #f0f2f5; display: flex; justify-content: center; align-items: center; padding: 15px; user-select: none; }
         .container { width: 100%; max-width: 650px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-height: 600px; display: flex; flex-direction: column; overflow: hidden; }
@@ -23,51 +24,34 @@
         .nav-box.current { border: 2px solid #f57c00; font-weight: bold; }
         .control-bar { padding: 15px 25px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
         .btn-circle { width: 45px; height: 45px; border-radius: 50%; border: none; background: #1a73e8; color: white; cursor: pointer; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="view-login" class="page active">
-        <div class="header" style="margin: -25px -25px 25px -25px; margin-bottom: 20px;">
-            <h2>CBT SMAN 2 Cikarang Barat</h2>
-        </div>
-        <label>Nama Lengkap</label>
-        <input type="text" id="input-nama" placeholder="Nama..." autocomplete="off">
+        <div class="header" style="margin: -25px -25px 25px -25px; margin-bottom: 20px;"><h2>CBT SMAN 2 Cikarang Barat</h2></div>
+        <label>Nama Lengkap</label><input type="text" id="input-nama" placeholder="Nama..." autocomplete="off">
         <label>Tingkat</label>
-        <select id="input-kelas" onchange="filterKelompok()">
-            <option value="" disabled selected>-- Pilih Tingkat --</option>
-            <option value="X">Kelas X</option><option value="XI">Kelas XI</option><option value="XII">Kelas XII</option>
-        </select>
-        <label>Rombel (ID Kelas)</label>
-        <select id="input-kelompok"><option value="" disabled selected>-- Pilih Kelas --</option></select>
-        <label>Token</label>
-        <input type="text" id="input-token" placeholder="Masukkan Token" autocomplete="off">
+        <select id="input-kelas" onchange="filterKelompok()"><option value="" disabled selected>-- Pilih Tingkat --</option><option value="X">Kelas X</option><option value="XI">Kelas XI</option><option value="XII">Kelas XII</option></select>
+        <label>Rombel</label><select id="input-kelompok"><option value="" disabled selected>-- Pilih Kelas --</option></select>
+        <label>Token</label><input type="text" id="input-token" placeholder="Masukkan Token" autocomplete="off">
         <button class="btn" onclick="login()">MULAI UJIAN</button>
     </div>
 
     <div id="view-loading" class="page" style="text-align: center; justify-content: center;">
-        <div class="loader"></div>
-        <h3 id="loading-text">Memuat Soal...</h3>
+        <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+        <h3 id="loading-text">Memproses...</h3>
     </div>
 
     <div id="view-exam" class="page" style="padding: 0;">
-        <div class="timer-info">
-            <span>Soal <span id="q-number">1</span></span>
-            <span id="timer-display">00:00</span>
-        </div>
+        <div class="timer-info"><span>Soal <span id="q-number">1</span></span><span id="timer-display">00:00</span></div>
         <div style="padding: 20px; flex-grow: 1; overflow-y: auto;">
             <img id="q-img" class="q-image" src="" alt="Gambar Soal">
             <div id="q-text" style="font-size: 1.1rem; margin-bottom: 20px; font-weight: 500;"></div>
             <div id="q-options"></div>
         </div>
-        <div class="control-bar">
-            <button class="btn-circle" onclick="prevQ()">❮</button>
-            <button id="btn-submit" class="btn" style="width: auto; padding: 0 20px; background: #27ae60; display: none;" onclick="submitExam()">KIRIM</button>
-            <button class="btn-circle" onclick="nextQ()">❯</button>
-        </div>
+        <div class="control-bar"><button class="btn-circle" onclick="prevQ()">❮</button><button id="btn-submit" class="btn" style="width: auto; padding: 0 20px; background: #27ae60; display: none;" onclick="submitExam()">KIRIM</button><button class="btn-circle" onclick="nextQ()">❯</button></div>
         <div class="nav-grid" id="nav-grid"></div>
     </div>
 
@@ -101,58 +85,47 @@
             const dUjian = await resUjian.json();
             if(!dUjian.list.length) throw new Error("Token salah!");
 
+            const infoUjian = dUjian.list[0];
             const resSoal = await fetch(`${API_URL}/api/bank_soal?where=(token,eq,${t})`);
             const dSoal = await resSoal.json();
             if(!dSoal.list.length) throw new Error("Soal belum tersedia!");
 
-            exam.questions = dSoal.list.sort(() => Math.random() - 0.5);
+            // Tandai ID dan Urutan asli, lalu acak
+            exam.questions = dSoal.list.map(q => {
+                // Simpan mapping teks jawaban ke huruf A-E yang benar sebelum diacak tampilannya
+                q._mapOpsi = { [q.opsi_a]: 'A', [q.opsi_b]: 'B', [q.opsi_c]: 'C', [q.opsi_d]: 'D', [q.opsi_e]: 'E' };
+                return q;
+            }).sort(() => Math.random() - 0.5);
+
             exam.student = { nama: n, kelas: k, id_kelas: g, token: t };
-            exam.config = { mapel: dUjian.list[0].mapel, guru: dUjian.list[0].nama_guru };
-            exam.timeLeft = (parseInt(dUjian.list[0].durasi) || 90) * 60;
+            exam.config = { mapel: infoUjian.mapel, guru: infoUjian.nama_guru, durasi_asli: infoUjian.durasi };
+            exam.timeLeft = (parseInt(infoUjian.durasi) || 90) * 60;
             exam.start = new Date();
 
             document.getElementById('view-loading').classList.remove('active');
             document.getElementById('view-exam').classList.add('active');
             renderQuestion();
             startTimer();
-        } catch(e) {
-            alert(e.message);
-            location.reload();
-        }
-    }
-
-    function startTimer() {
-        exam.timer = setInterval(() => {
-            exam.timeLeft--;
-            let m = Math.floor(exam.timeLeft/60).toString().padStart(2,'0'), s = (exam.timeLeft%60).toString().padStart(2,'0');
-            document.getElementById('timer-display').innerText = `${m}:${s}`;
-            if(exam.timeLeft <= 0) submitExam();
-        }, 1000);
+        } catch(e) { alert(e.message); location.reload(); }
     }
 
     function renderQuestion() {
         const q = exam.questions[exam.currentIndex];
         const qId = q.Id || q.id;
         document.getElementById('q-number').innerText = `${exam.currentIndex + 1} / ${exam.questions.length}`;
-        
-        // MENAMPILKAN SOAL (KOLOM 'soal')
         document.getElementById('q-text').innerHTML = q.soal;
-
-        // MENAMPILKAN GAMBAR (KOLOM 'img_link')
+        
         const imgTag = document.getElementById('q-img');
-        if(q.img_link && q.img_link.trim() !== "") {
-            imgTag.src = q.img_link;
-            imgTag.style.display = 'block';
-        } else {
-            imgTag.style.display = 'none';
-        }
+        if(q.img_link) { imgTag.src = q.img_link; imgTag.style.display = 'block'; } else { imgTag.style.display = 'none'; }
 
+        // Opsi diacak untuk siswa
+        let rawOpts = [{t:q.opsi_a}, {t:q.opsi_b}, {t:q.opsi_c}, {t:q.opsi_d}, {t:q.opsi_e}].filter(o => o.t).sort(() => Math.random() - 0.5);
+        
         let html = '';
-        [{c:'A', t:q.opsi_a}, {c:'B', t:q.opsi_b}, {c:'C', t:q.opsi_c}, {c:'D', t:q.opsi_d}, {c:'E', t:q.opsi_e}].forEach(o => {
-            if(o.t) {
-                const sel = exam.answers[qId] === o.t ? 'selected' : '';
-                html += `<div class="option ${sel}" onclick="selectAns('${qId}', '${o.t}')">${o.c}. ${o.t}</div>`;
-            }
+        rawOpts.forEach((o, i) => {
+            const hurufTampil = String.fromCharCode(65 + i);
+            const isSelected = exam.answers[qId] === o.t ? 'selected' : '';
+            html += `<div class="option ${isSelected}" onclick="selectAns('${qId}', '${o.t}')">${hurufTampil}. ${o.t}</div>`;
         });
         document.getElementById('q-options').innerHTML = html;
         document.getElementById('btn-submit').style.display = (exam.currentIndex === exam.questions.length - 1) ? 'block' : 'none';
@@ -160,26 +133,38 @@
     }
 
     function selectAns(id, val) { exam.answers[id] = val; renderQuestion(); }
-    function renderNav() {
-        document.getElementById('nav-grid').innerHTML = exam.questions.map((q, i) => {
-            const id = q.Id || q.id;
-            return `<div class="nav-box ${exam.answers[id] ? 'answered' : ''} ${i === exam.currentIndex ? 'current' : ''}" onclick="jump(${i})">${i+1}</div>`;
-        }).join('');
-    }
+    function startTimer() { exam.timer = setInterval(() => { exam.timeLeft--; let m = Math.floor(exam.timeLeft/60).toString().padStart(2,'0'), s = (exam.timeLeft%60).toString().padStart(2,'0'); document.getElementById('timer-display').innerText = `${m}:${s}`; if(exam.timeLeft <= 0) submitExam(); }, 1000); }
     function jump(i) { exam.currentIndex = i; renderQuestion(); }
     function nextQ() { if(exam.currentIndex < exam.questions.length - 1) jump(exam.currentIndex + 1); }
     function prevQ() { if(exam.currentIndex > 0) jump(exam.currentIndex - 1); }
+    function renderNav() { document.getElementById('nav-grid').innerHTML = exam.questions.map((q, i) => `<div class="nav-box ${exam.answers[q.Id||q.id] ? 'answered' : ''} ${i === exam.currentIndex ? 'current' : ''}" onclick="jump(${i})">${i+1}</div>`).join(''); }
 
     async function submitExam() {
         if(exam.timeLeft > 0 && !confirm("Kirim jawaban?")) return;
         clearInterval(exam.timer);
         document.getElementById('view-exam').style.display = 'none';
         document.getElementById('view-loading').classList.add('active');
-        document.getElementById('loading-text').innerText = "Mengirim...";
 
         let benar = 0;
-        exam.questions.forEach(q => { if(exam.answers[q.Id || q.id] === q.jawaban_benar) benar++; });
+        // 1. Ambil semua soal dan urutkan berdasarkan ID dari terkecil ke terbesar
+        let sortedQuestions = [...exam.questions].sort((a, b) => (a.Id || a.id) - (b.Id || b.id));
         
+        // 2. Susun string jawaban secara urut (misal: "ABCDC...")
+        let stringJawaban = "";
+        sortedQuestions.forEach(q => {
+            const qId = q.Id || q.id;
+            const teksTerpilih = exam.answers[qId];
+            
+            if(teksTerpilih) {
+                // Ambil huruf asli (A/B/C/D/E) dari mapping teks
+                stringJawaban += q._mapOpsi[teksTerpilih];
+                // Hitung benar
+                if(teksTerpilih === q.jawaban_benar) benar++;
+            } else {
+                stringJawaban += "-"; // Jika tidak dijawab
+            }
+        });
+
         const score = Math.round((benar / exam.questions.length) * 100);
         const now = new Date();
         const diff = Math.floor((now - exam.start) / 60000);
@@ -194,7 +179,8 @@
             jml_salah: exam.questions.length - benar,
             nilai: score,
             nama_guru: exam.config.guru,
-            jawaban: JSON.stringify(exam.answers),
+            jawaban: stringJawaban, // Format "ABCDE" urut ID
+            wkt_diberikan: exam.config.durasi_asli + " Menit", // Diambil dari tabel ujian
             wkt_mulai: exam.start.toISOString().slice(0,19).replace('T',' '),
             wkt_selesai: now.toISOString().slice(0,19).replace('T',' '),
             wkt_digunakan: diff + " Menit"
@@ -208,11 +194,8 @@
             });
             document.getElementById('view-loading').classList.remove('active');
             document.getElementById('view-result').classList.add('active');
-            document.getElementById('final-msg').innerHTML = `Siswa: ${exam.student.nama}<br>Nilai: ${score}`;
-        } catch(e) {
-            alert("Gagal kirim, coba lagi!");
-            document.getElementById('view-exam').classList.add('active');
-        }
+            document.getElementById('final-msg').innerHTML = `Nilai Anda: ${score}`;
+        } catch(e) { alert("Gagal kirim!"); }
     }
 </script>
 </body>
