@@ -1,135 +1,212 @@
-// script.js
 const API_URL = "https://nocob-proxy.kurikulum-sman2cikarangbarat.workers.dev";
 let exam = { 
-    questions: [], currentIndex: 0, answers: {}, student: {}, 
-    config: {}, timeLeft: 0, timer: null, optionStates: {}, cheatCount: 0 
+    questions: [], 
+    currentIndex: 0, 
+    answers: {}, 
+    student: {}, 
+    config: {}, 
+    timeLeft: 0, 
+    start: null, 
+    optionStates: {}, 
+    cheatCount: 0 
 };
 
-// --- SECURITY: ANTI INSPECT ---
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.onkeydown = e => { if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && [73,74,67].includes(e.keyCode)) || (e.ctrlKey && e.keyCode == 85)) return false; };
-
-// --- UTILITY ---
-const showView = (id) => {
-    document.querySelectorAll('.page, .page-exam').forEach(p => p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-};
-
-const showToast = (m) => {
-    const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = 1;
-    setTimeout(() => t.style.opacity = 0, 3000);
-};
-
-// --- FLOW: LOGIN & WELCOME ---
-document.getElementById('input-kelas').addEventListener('change', (e) => {
-    const s = document.getElementById('input-kelompok');
-    s.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
-    ["A","B","C","D","E","F","G","H","I","J","K","L"].forEach(h => {
-        let o = document.createElement("option"); o.value = `${e.target.value}-${h}`; o.text = `${e.target.value} - ${h}`; s.appendChild(o);
-    });
-});
-
-async function login() {
-    const n = document.getElementById('input-nama').value, k = document.getElementById('input-kelas').value, 
-          g = document.getElementById('input-kelompok').value, t = document.getElementById('input-token').value.trim();
-    
-    if(!n || !k || !g || !t) return showToast("⚠️ Mohon lengkapi semua data!");
-
-    showView('view-loading');
-    try {
-        const [rU, rS] = await Promise.all([
-            fetch(`${API_URL}/api/ujian?where=(token,eq,${t})`),
-            fetch(`${API_URL}/api/bank_soal?where=(token,eq,${t})`)
-        ]);
-        const dU = await rU.json(), dS = await rS.json();
-
-        if(!dU.list.length) throw new Error("Token tidak valid!");
-        
-        // Simpan Data
-        exam.questions = dS.list.sort(() => Math.random() - 0.5);
-        exam.student = { nama: n, tingkat: k, rombel: g, token: t };
-        exam.config = { mapel: dU.list[0].mapel, guru: dU.list[0].nama_guru, durasi: dU.list[0].durasi };
-        exam.timeLeft = (parseInt(dU.list[0].durasi) || 90) * 60;
-
-        // Tampilkan Sambutan
-        document.getElementById('welcome-name').innerText = `Halo, ${n}!`;
-        document.getElementById('welcome-class').innerText = `Kelas ${g}`;
-        showView('view-welcome');
-
-    } catch(e) { showToast(e.message); showView('view-login'); }
+function showToast(m) { 
+    const t = document.getElementById('toast'); 
+    t.innerText = m; 
+    t.style.opacity = 1;
+    setTimeout(() => t.style.opacity = 0, 2000);
 }
 
-// --- FLOW: EXAM ---
-function startExam() {
-    exam.start = new Date();
-    showView('view-exam');
-    renderQuestion();
-    startTimer();
+function filterKelompok() {
+    const tingkat = document.getElementById('input-kelas').value;
+    const select = document.getElementById('input-kelompok');
+    select.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
+    
+    ["A","B","C","D","E","F","G","H","I","J","K","L"].forEach(huruf => {
+        let option = document.createElement("option");
+        option.value = `${tingkat} - ${huruf}`;
+        option.text = `${tingkat} - ${huruf}`;
+        select.appendChild(option);
+    });
+}
+
+function showConfirm() { 
+    document.getElementById('modal-confirm').style.display = 'flex'; 
+}
+
+function hideConfirm() { 
+    document.getElementById('modal-confirm').style.display = 'none'; 
+}
+
+async function login() {
+    const nama = document.getElementById('input-nama').value;
+    const kelas = document.getElementById('input-kelas').value;
+    const kelompok = document.getElementById('input-kelompok').value;
+    const token = document.getElementById('input-token').value.trim();
+    
+    if(!nama || !kelas || !kelompok || !token) {
+        showToast("Lengkapi semua kolom!");
+        return;
+    }
+
+    document.getElementById('view-login').style.display = 'none';
+    document.getElementById('view-loading').classList.add('active');
+
+    try {
+        const [resUjian, resSoal] = await Promise.all([
+            fetch(`${API_URL}/api/ujian?where=(token,eq,${token})`),
+            fetch(`${API_URL}/api/bank_soal?where=(token,eq,${token})`)
+        ]);
+        
+        const [dataUjian, dataSoal] = await Promise.all([
+            resUjian.json(),
+            resSoal.json()
+        ]);
+
+        if(!dataUjian.list.length) {
+            throw new Error("Token Salah!");
+        }
+        
+        exam.questions = dataSoal.list.sort(() => Math.random() - 0.5);
+        exam.student = { 
+            nama: nama, 
+            tingkat: kelas, 
+            rombel: kelompok, 
+            token: token 
+        };
+        exam.config = { 
+            mapel: dataUjian.list[0].mapel, 
+            guru: dataUjian.list[0].nama_guru, 
+            durasi: dataUjian.list[0].durasi 
+        };
+        exam.timeLeft = (parseInt(dataUjian.list[0].durasi) || 90) * 60;
+        exam.start = new Date();
+
+        document.getElementById('view-loading').classList.remove('active');
+        document.getElementById('view-exam').classList.add('active');
+        renderQuestion();
+        startTimer();
+    } catch(error) { 
+        showToast(error.message); 
+        location.reload(); 
+    }
 }
 
 function renderQuestion() {
     const q = exam.questions[exam.currentIndex];
     const qId = q.Id || q.id;
+    
     document.getElementById('q-number').innerText = `${exam.currentIndex + 1} / ${exam.questions.length}`;
     document.getElementById('q-text').innerHTML = q.soal;
 
     const img = document.getElementById('q-img');
-    if(q.img_link) {
-        img.src = q.img_link;
+    if(q.img_link) { 
+        const id = q.img_link.match(/[-\w]{25,}/);
+        img.src = id ? `https://lh3.googleusercontent.com/u/0/d/${id[0]}` : q.img_link;
         img.style.display = 'block';
-    } else { img.style.display = 'none'; }
-
-    // Logic Opsi Acak per Siswa
-    if (!exam.optionStates[qId]) {
-        let opts = [{l:'A',t:q.opsi_a},{l:'B',t:q.opsi_b},{l:'C',t:q.opsi_c},{l:'D',t:q.opsi_d},{l:'E',t:q.opsi_e}].filter(o=>o.t);
-        exam.optionStates[qId] = opts.sort(() => Math.random() - 0.5);
+    } else { 
+        img.style.display = 'none'; 
     }
 
-    let h = '';
-    exam.optionStates[qId].forEach((o, i) => {
-        const letter = String.fromCharCode(65 + i);
-        const sel = exam.answers[qId] === o.l ? 'selected' : '';
-        h += `<div class="option ${sel}" onclick="setAns('${qId}','${o.l}')">
-                <strong style="margin-right:10px">${letter}.</strong> <span>${o.t}</span>
-              </div>`;
-    });
-    document.getElementById('q-options').innerHTML = h;
+    if (!exam.optionStates[qId]) {
+        let options = [
+            {label:'A', text:q.opsi_a},
+            {label:'B', text:q.opsi_b},
+            {label:'C', text:q.opsi_c},
+            {label:'D', text:q.opsi_d},
+            {label:'E', text:q.opsi_e}
+        ].filter(o => o.text);
+        
+        exam.optionStates[qId] = options.sort(() => Math.random() - 0.5);
+    }
 
-    const isDone = Object.keys(exam.answers).length === exam.questions.length;
-    document.getElementById('btn-kirim-trigger').style.display = isDone ? 'block' : 'none';
+    let html = '';
+    exam.optionStates[qId].forEach((option, index) => {
+        const letter = String.fromCharCode(65 + index);
+        const selected = exam.answers[qId] === option.label ? 'selected' : '';
+        html += `<div class="option ${selected}" onclick="setAns('${qId}','${option.label}')">
+                    <b>${letter}.</b> ${option.text}
+                 </div>`;
+    });
+    
+    document.getElementById('q-options').innerHTML = html;
+
+    const semuaTerjawab = Object.keys(exam.answers).length === exam.questions.length;
+    document.getElementById('btn-kirim-trigger').style.display = semuaTerjawab ? 'block' : 'none';
+    
     renderNav();
 }
 
-window.setAns = (id, l) => { 
-    exam.answers[id] = l; renderQuestion(); 
-    setTimeout(() => { if(exam.currentIndex < exam.questions.length - 1) jump(exam.currentIndex + 1); }, 300);
-};
-
-function jump(i) { exam.currentIndex = i; renderQuestion(); }
+function setAns(id, label) { 
+    exam.answers[id] = label; 
+    renderQuestion(); 
+    setTimeout(() => { 
+        if(exam.currentIndex < exam.questions.length - 1) {
+            jump(exam.currentIndex + 1); 
+        }
+    }, 400);
+}
 
 function startTimer() {
     exam.timer = setInterval(() => {
         exam.timeLeft--;
-        let m = Math.floor(exam.timeLeft/60).toString().padStart(2,'0'), s = (exam.timeLeft%60).toString().padStart(2,'0');
-        document.getElementById('timer-display').innerText = `${m}:${s}`;
-        if(exam.timeLeft <= 0) submitData();
+        let minutes = Math.floor(exam.timeLeft/60).toString().padStart(2,'0');
+        let seconds = (exam.timeLeft%60).toString().padStart(2,'0');
+        document.getElementById('timer-display').innerText = `${minutes}:${seconds}`;
+        
+        if(exam.timeLeft <= 0) {
+            submitData();
+        }
     }, 1000);
 }
 
-// --- SUBMIT ---
-async function submitData() {
-    document.getElementById('modal-confirm').style.display = 'none';
-    clearInterval(exam.timer);
-    showView('view-loading');
-    document.getElementById('loading-text').innerText = "Mengirim Jawaban...";
+function jump(index) { 
+    exam.currentIndex = index; 
+    renderQuestion(); 
+}
 
-    let sorted = [...exam.questions].sort((a,b) => (a.Id||a.id) - (b.Id||b.id));
-    let strAns = "", benar = 0;
-    sorted.forEach(q => {
-        const a = exam.answers[q.Id||q.id] || "-";
-        strAns += a; if(a === q.kunci) benar++;
+function nextQ() { 
+    if(exam.currentIndex < exam.questions.length - 1) {
+        jump(exam.currentIndex + 1); 
+    }
+}
+
+function prevQ() { 
+    if(exam.currentIndex > 0) {
+        jump(exam.currentIndex - 1); 
+    }
+}
+
+function renderNav() {
+    document.getElementById('nav-grid').innerHTML = exam.questions.map((q, index) => {
+        const qId = q.Id || q.id;
+        const answered = exam.answers[qId] ? 'answered' : '';
+        const current = index === exam.currentIndex ? 'current' : '';
+        
+        return `<div class="nav-box ${answered} ${current}" onclick="jump(${index})">${index + 1}</div>`;
+    }).join('');
+}
+
+async function submitData() {
+    hideConfirm();
+    clearInterval(exam.timer);
+    
+    document.getElementById('view-exam').style.display = 'none';
+    document.getElementById('view-loading').classList.add('active');
+    document.getElementById('loading-text').innerText = "Menyimpan ke Server...";
+
+    let sortedQuestions = [...exam.questions].sort((a, b) => (a.Id||a.id) - (b.Id||b.id));
+    let stringJawaban = "";
+    let benar = 0;
+    
+    sortedQuestions.forEach(q => {
+        const jawaban = exam.answers[q.Id||q.id] || "-";
+        stringJawaban += jawaban;
+        if(jawaban === q.kunci) benar++;
     });
 
+    const now = new Date();
     const payload = {
         nama_siswa: exam.student.nama,
         token: exam.student.token,
@@ -140,43 +217,34 @@ async function submitData() {
         jml_salah: exam.questions.length - benar,
         nilai: Math.round((benar/exam.questions.length)*100),
         nama_guru: exam.config.guru,
-        jawaban: strAns,
+        jawaban: stringJawaban,
         curang: exam.cheatCount,
+        wkt_diberikan: exam.config.durasi + " Menit",
         wkt_mulai: exam.start.toISOString().slice(0,19).replace('T',' '),
-        wkt_selesai: new Date().toISOString().slice(0,19).replace('T',' ')
+        wkt_selesai: now.toISOString().slice(0,19).replace('T',' '),
+        wkt_digunakan: Math.floor((now - exam.start)/60000) + " Menit"
     };
 
     try {
-        await fetch(`${API_URL}/api/nilai`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        document.getElementById('final-msg').innerHTML = `Jawaban <b>${exam.student.nama}</b> berhasil terkirim.`;
-        showView('view-result');
-    } catch(e) { showToast("Koneksi gagal, mencoba ulang..."); setTimeout(submitData, 3000); }
+        await fetch(`${API_URL}/api/nilai`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        
+        document.getElementById('view-loading').classList.remove('active');
+        document.getElementById('view-result').classList.add('active');
+        document.getElementById('final-msg').innerHTML = 
+            `Jawaban <b>${exam.student.nama}</b> berhasil terkirim.<br>Silakan tunjukkan layar ini kepada pengawas.`;
+    } catch(error) { 
+        showToast("Gagal kirim, mencoba ulang..."); 
+        setTimeout(submitData, 3000); 
+    }
 }
 
-function renderNav() {
-    document.getElementById('nav-grid').innerHTML = exam.questions.map((q, i) => 
-        `<div class="nav-box ${exam.answers[q.Id||q.id]?'answered':''} ${i===exam.currentIndex?'current':''}" onclick="jump(${i})">${i+1}</div>`
-    ).join('');
-}
-
-// --- CHEAT DETECTION ---
 document.addEventListener("visibilitychange", () => {
     if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
         exam.cheatCount++;
-        if(exam.cheatCount >= 2) {
-            alert("⚠️ Anda terdeteksi keluar dari aplikasi sebanyak 2 kali. Ujian dihentikan!");
-            submitData();
-        } else {
-            showToast("⚠️ Peringatan: Jangan pindah tab! (Pelanggaran: 1/2)");
-        }
+        showToast("⚠️ Peringatan: Jangan pindah tab!");
     }
 });
-
-// --- LISTENERS ---
-document.getElementById('login-btn').addEventListener('click', login);
-document.getElementById('start-exam-btn').addEventListener('click', startExam);
-document.getElementById('prev-btn').addEventListener('click', () => { if(exam.currentIndex > 0) jump(exam.currentIndex-1); });
-document.getElementById('next-btn').addEventListener('click', () => { if(exam.currentIndex < exam.questions.length-1) jump(exam.currentIndex+1); });
-document.getElementById('btn-kirim-trigger').addEventListener('click', () => document.getElementById('modal-confirm').style.display='flex');
-document.getElementById('cancel-confirm-btn').addEventListener('click', () => document.getElementById('modal-confirm').style.display='none');
-document.getElementById('final-submit-btn').addEventListener('click', submitData);
