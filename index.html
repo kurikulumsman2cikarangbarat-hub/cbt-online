@@ -3,82 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debug - Daftar Token Ujian</title>
+    <title>CBT Online - SMAN 2 Cikarang Barat</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f7f6; }
-        .card { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        th { background: #007bff; color: white; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .status { text-align: center; font-size: 14px; margin-top: 10px; }
-        .error { color: red; font-weight: bold; }
-        .btn-refresh { display: block; width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --dark: #343a40; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f7f9; margin: 0; color: #333; }
+        .container { max-width: 800px; margin: 40px auto; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .hidden { display: none !important; }
+        
+        /* Form Styling */
+        h2 { text-align: center; color: var(--dark); margin-bottom: 25px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        /* Button Styling */
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; color: white; }
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success { background: var(--success); }
+        
+        /* Exam Layout */
+        .exam-layout { display: flex; gap: 20px; }
+        .main-exam { flex: 2; }
+        .sidebar { flex: 1; background: white; padding: 15px; border-radius: 12px; height: fit-content; }
+        .grid-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+        .nav-item { padding: 10px; text-align: center; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: #f8f9fa; font-size: 13px; }
+        .nav-item.answered { background: var(--primary); color: white; border-color: var(--primary); }
+        .nav-item.active { border: 2px solid var(--dark); font-weight: bold; }
+        
+        /* Options */
+        .option-item { border: 2px solid #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .option-item:hover { background: #f8f9fa; border-color: #ddd; }
+        .option-item.selected { border-color: var(--primary); background: #eef6ff; }
+        img { max-width: 100%; border-radius: 8px; margin-bottom: 15px; }
+
+        @media (max-width: 768px) { .exam-layout { flex-direction: column; } }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Daftar Token Aktif</h2>
-    <button class="btn-refresh" onclick="loadTokens()">Segarkan Data (Fetch)</button>
-    <div id="status-area" class="status">Menunggu perintah...</div>
-    
-    <table id="token-table" style="display: none;">
-        <thead>
-            <tr>
-                <th>No.</th>
-                <th>Token</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody id="token-list">
-            </tbody>
-    </table>
+<div class="container">
+    <div id="section-login" class="card">
+        <h2>Login CBT Online</h2>
+        <div class="form-group">
+            <label>Nama Lengkap</label>
+            <input type="text" id="nama_siswa" placeholder="Contoh: Jokowi">
+        </div>
+        <div class="form-group">
+            <label>Jenjang</label>
+            <select id="jenjang" onchange="updateKelas()">
+                <option value="">-- Pilih Jenjang --</option>
+                <option value="X">X</option>
+                <option value="XI">XI</option>
+                <option value="XII">XII</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Kelas (ID Kelas)</label>
+            <select id="id_kelas">
+                <option value="">-- Pilih Jenjang Terlebih Dahulu --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Token Ujian</label>
+            <input type="text" id="token" placeholder="Masukkan Token (Contoh: LLL)">
+        </div>
+        <button class="btn btn-primary" onclick="authLogin()">Masuk Ujian</button>
+    </div>
+
+    <div id="section-pakta" class="card hidden">
+        <h2>Pakta Integritas</h2>
+        <p>Saya, <b id="p_nama"></b> dari kelas <b id="p_kls"></b>, menyepakati akan mengerjakan CBT Online dengan penuh tanggung jawab dan jujur.</p>
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 5px solid #ffc107; margin: 15px 0;">
+            <b>Peringatan Sistem:</b>
+            <ul>
+                <li>Pindah tab 1x: Peringatan sistem.</li>
+                <li>Pindah tab 2x: Peringatan keras.</li>
+                <li>Pindah tab 3x: Otomatis kembali ke menu login.</li>
+            </ul>
+        </div>
+        <label style="cursor:pointer">
+            <input type="checkbox" id="check-setuju"> Saya sudah membacanya dan mengerti.
+        </label>
+        <br><br>
+        <button class="btn btn-success" onclick="startExam()">Mulai Mengerjakan</button>
+    </div>
+
+    <div id="section-exam" class="hidden">
+        <div class="exam-layout">
+            <div class="main-exam card">
+                <div id="soal-area"></div>
+                <hr>
+                <div style="display: flex; justify-content: space-between;">
+                    <button id="btn-prev" class="btn btn-primary" style="width: 48%" onclick="navigasi(-1)">Kembali</button>
+                    <button id="btn-next" class="btn btn-primary" style="width: 48%" onclick="navigasi(1)">Lanjut</button>
+                    <button id="btn-finish" class="btn btn-success hidden" style="width: 48%" onclick="submitUjian()">Selesai</button>
+                </div>
+            </div>
+            <div class="sidebar">
+                <h4 style="margin:0">Navigasi Soal</h4>
+                <div class="grid-nav" id="grid-nav"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // GANTI DENGAN URL WORKER ANDA
-    const WORKER_URL = "https://URL-WORKER-ANDA.workers.dev";
+    // URL Worker yang sudah Anda berikan
+    const WORKER_URL = "https://nocob-proxy.kurikulum-sman2cikarangbarat.workers.dev";
 
-    async function loadTokens() {
-        const statusArea = document.getElementById('status-area');
-        const table = document.getElementById('token-table');
-        const list = document.getElementById('token-list');
+    let db = {
+        siswa: {},
+        questions: [],
+        currentIdx: 0,
+        answers: {},
+        wktMulai: null,
+        jmlCurang: 0
+    };
 
-        statusArea.innerHTML = "Sedang mengambil data dari Worker...";
-        statusArea.className = "status";
-        list.innerHTML = "";
-        table.style.display = "none";
+    const daftarKelas = {
+        "X": ["X-A", "X-B", "X-C", "X-D", "X-E", "X-F"],
+        "XI": ["XI-A", "XI-B", "XI-C", "XI-D", "XI-E", "XI-F", "XI-G"],
+        "XII": ["XII-A", "XII-B", "XII-C", "XII-D", "XII-E", "XII-F", "XII-G"]
+    };
+
+    function updateKelas() {
+        const jenjang = document.getElementById('jenjang').value;
+        const klsSelect = document.getElementById('id_kelas');
+        klsSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+        if (jenjang && daftarKelas[jenjang]) {
+            daftarKelas[jenjang].forEach(k => {
+                let opt = document.createElement('option');
+                opt.value = k; opt.innerHTML = k;
+                klsSelect.appendChild(opt);
+            });
+        }
+    }
+
+    async function authLogin() {
+        const payload = {
+            nama: document.getElementById('nama_siswa').value,
+            jenjang: document.getElementById('jenjang').value,
+            id_kls: document.getElementById('id_kelas').value,
+            token: document.getElementById('token').value.trim()
+        };
+
+        if (!payload.nama || !payload.token || !payload.id_kls) return alert("Lengkapi semua data!");
 
         try {
-            // Memanggil endpoint /api/ujian yang sudah kita buat di Worker
-            const response = await fetch(`${WORKER_URL}/api/ujian`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP Error! Status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            // Validasi Token ke Tabel Ujian
+            const res = await fetch(`${WORKER_URL}/api/ujian?where=(token,eq,${payload.token})`);
+            const data = await res.json();
 
             if (data.list && data.list.length > 0) {
-                data.list.forEach((item, index) => {
-                    const row = `<tr>
-                        <td>${index + 1}</td>
-                        <td><strong>${item.token || 'KOSONG'}</strong></td>
-                        <td>✅ Aktif</td>
-                    </tr>`;
-                    list.innerHTML += row;
-                });
-                table.style.display = "table";
-                statusArea.innerHTML = `Berhasil memuat ${data.list.length} token.`;
+                db.siswa = payload;
+                document.getElementById('p_nama').innerText = payload.nama;
+                document.getElementById('p_kls').innerText = payload.id_kls;
+                showSection('section-pakta');
             } else {
-                statusArea.innerHTML = "Koneksi berhasil, tapi <b>TIDAK ADA DATA</b> di tabel 'ujian'.";
+                alert("Token tidak ditemukan di database!");
             }
-        } catch (error) {
-            console.error("Detail Error:", error);
-            statusArea.innerHTML = `<span class="error">Gagal: ${error.message}</span><br><small>Cek Console F12 untuk detail.</small>`;
+        } catch (e) { alert("Gagal menyambung ke database."); }
+    }
+
+    async function startExam() {
+        if (!document.getElementById('check-setuju').checked) return alert("Harap centang persetujuan!");
+
+        db.wktMulai = new Date();
+        showSection('section-exam');
+
+        // Deteksi Pindah Tab
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                db.jmlCurang++;
+                if (db.jmlCurang === 1) alert("Peringatan 1: Jangan pindah tab!");
+                else if (db.jmlCurang === 2) alert("Peringatan 2: PERINGATAN KERAS!");
+                else if (db.jmlCurang >= 3) location.reload();
+            }
+        });
+
+        // Ambil Soal
+        try {
+            const res = await fetch(`${WORKER_URL}/api/bank_soal?where=(token,eq,${db.siswa.token})`);
+            const data = await res.json();
+            // Acak urutan soal
+            db.questions = data.list.sort(() => Math.random() - 0.5);
+            renderSoal();
+            renderNav();
+        } catch (e) { alert("Gagal memuat soal."); }
+    }
+
+    function renderSoal() {
+        const q = db.questions[db.currentIdx];
+        const area = document.getElementById('soal-area');
+        
+        // Simpan pengacakan opsi agar tidak berubah saat navigasi balik
+        if (!q.acakOpsi) {
+            q.acakOpsi = [
+                {k: 'A', v: q.opsi_a}, {k: 'B', v: q.opsi_b},
+                {k: 'C', v: q.opsi_c}, {k: 'D', v: q.opsi_d}
+            ].sort(() => Math.random() - 0.5);
         }
+
+        let img = q.img_link ? `<img src="https://drive.google.com/uc?export=view&id=${q.img_link}">` : '';
+        
+        let html = `<h3>Soal No. ${db.currentIdx + 1}</h3>${img}<p>${q.pertanyaan}</p>`;
+        q.acakOpsi.forEach(opt => {
+            const active = db.answers[q.id] === opt.k ? 'selected' : '';
+            html += `<div class="option-item ${active}" onclick="pilih('${q.id}', '${opt.k}')">${opt.k}. ${opt.v}</div>`;
+        });
+
+        area.innerHTML = html;
+        
+        // Atur tombol
+        document.getElementById('btn-prev').disabled = db.currentIdx === 0;
+        const isLast = db.currentIdx === db.questions.length - 1;
+        document.getElementById('btn-next').classList.toggle('hidden', isLast);
+        document.getElementById('btn-finish').classList.toggle('hidden', !isLast);
+    }
+
+    function pilih(qId, val) {
+        db.answers[qId] = val;
+        renderSoal();
+        renderNav();
+    }
+
+    function renderNav() {
+        const grid = document.getElementById('grid-nav');
+        grid.innerHTML = db.questions.map((q, i) => `
+            <div class="nav-item ${db.answers[q.id] ? 'answered' : ''} ${db.currentIdx === i ? 'active' : ''}" 
+                 onclick="jump(${i})">${i + 1}</div>
+        `).join('');
+    }
+
+    function jump(i) { db.currentIdx = i; renderSoal(); renderNav(); }
+    function navigasi(dir) { db.currentIdx += dir; renderSoal(); renderNav(); }
+
+    async function submitUjian() {
+        if (!confirm("Kirim semua jawaban sekarang?")) return;
+
+        let benar = 0;
+        db.questions.forEach(q => { if(db.answers[q.id] === q.jawaban_benar) benar++; });
+
+        const wktSelesai = new Date();
+        const q0 = db.questions[0];
+
+        const payload = {
+            nama_siswa: db.siswa.nama,
+            token: db.siswa.token,
+            mapel: q0.mapel,
+            kelas: db.siswa.jenjang,
+            id_kelas: db.siswa.id_kls,
+            jml_benar: benar,
+            jml_salah: db.questions.length - benar,
+            nilai: (benar / db.questions.length) * 100,
+            jml_curang: db.jmlCurang,
+            nama_guru: q0.nama_guru,
+            jawaban: JSON.stringify(db.answers),
+            wkt_mulai: db.wktMulai.toISOString(),
+            wkt_selesai: wktSelesai.toISOString(),
+            wkt_diberikan: q0.ujian || "-",
+            wkt_digunakan: Math.floor((wktSelesai - db.wktMulai) / 60000) + " Menit"
+        };
+
+        try {
+            await fetch(`${WORKER_URL}/api/nilai`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            alert("Ujian Selesai! Skor Anda: " + payload.nilai);
+            location.reload();
+        } catch (e) { alert("Gagal menyimpan hasil ujian."); }
+    }
+
+    function showSection(id) {
+        ['section-login', 'section-pakta', 'section-exam'].forEach(s => {
+            document.getElementById(s).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
     }
 </script>
 
