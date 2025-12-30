@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CBT SMAN 2 Cikarang Barat</title>
     <style>
-        /* CSS TETAP SEPERTI ASLI ANDA */
+        /* CSS TETAP SAMA SEPERTI SEBELUMNYA */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; padding: 15px; user-select: none; }
         .container { width: 100%; max-width: 650px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-height: 600px; display: flex; flex-direction: column; overflow: hidden; }
@@ -54,7 +54,7 @@
 
     <div id="view-loading" class="page" style="text-align: center; justify-content: center;">
         <div class="loader"></div>
-        <h3>Memproses Data...</h3>
+        <h3>Sedang Memproses...</h3>
     </div>
 
     <div id="view-exam" class="page" style="padding: 0;">
@@ -89,7 +89,7 @@
     let examData = {
         questions: [],
         currentIndex: 0,
-        answers: {}, // Key menggunakan ID Soal agar unik
+        answers: {},
         student: {},
         startTime: null,
         cheatCount: 0,
@@ -101,21 +101,23 @@
         const tingkat = document.getElementById('input-kelas').value;
         const sel = document.getElementById('input-kelompok');
         sel.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
-        
         let list = [];
         if (tingkat === "X") list = ["X - A", "X - B", "X - C", "X - D", "X - E", "X - F"];
         else if (tingkat === "XI") list = ["XI - A", "XI - B", "XI - C", "XI - D", "XI - E", "XI - F", "XI - G"];
         else if (tingkat === "XII") list = ["XII - A", "XII - B", "XII - C", "XII - D", "XII - E", "XII - F", "XII - G"];
-        
-        list.forEach(k => {
-            let o = document.createElement("option"); o.value = k; o.innerText = k;
-            sel.appendChild(o);
-        });
+        list.forEach(k => { let o = document.createElement("option"); o.value = k; o.innerText = k; sel.appendChild(o); });
     }
 
     function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
+    }
+
+    // Fungsi Format Tanggal untuk Database SQL
+    function formatDBDate(date) {
+        let d = new Date(date);
+        let pad = (num) => num.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     }
 
     async function checkExam() {
@@ -125,7 +127,6 @@
         const p = document.getElementById('input-password').value.trim();
 
         if (!n || !k || !g || !p) return alert("Mohon lengkapi seluruh data!");
-
         showPage('view-loading');
 
         try {
@@ -141,16 +142,13 @@
                     examData.questions = dataSoal.list.sort(() => Math.random() - 0.5);
                     examData.student = { nama: n, tingkat: k, kelas: g, token: p };
                     examData.startTime = new Date();
-                    
-                    // Timer Setting (Ambil dari tabel ujian kolom durasi, jika ada)
-                    const durasiMenit = parseInt(infoUjian.durasi) || 90;
-                    examData.remainingSeconds = durasiMenit * 60;
+                    examData.remainingSeconds = (parseInt(infoUjian.durasi) || 90) * 60;
                     
                     showPage('view-exam');
                     renderQuestion();
                     startTimer();
                 } else { throw new Error("Soal belum tersedia untuk token ini."); }
-            } else { throw new Error("Token salah atau tidak aktif!"); }
+            } else { throw new Error("Token salah!"); }
         } catch (e) {
             showPage('view-login');
             alert(e.message);
@@ -164,11 +162,7 @@
             let m = Math.floor(examData.remainingSeconds / 60).toString().padStart(2, '0');
             let s = (examData.remainingSeconds % 60).toString().padStart(2, '0');
             document.getElementById('timer-display').innerText = `${m}:${s}`;
-            if (examData.remainingSeconds <= 0) {
-                clearInterval(examData.timer);
-                alert("Waktu Habis!");
-                finishExam();
-            }
+            if (examData.remainingSeconds <= 0) { clearInterval(examData.timer); finishExam(); }
         }, 1000);
     }
 
@@ -177,34 +171,25 @@
         document.getElementById('q-number').innerText = `${examData.currentIndex + 1} / ${examData.questions.length}`;
         document.getElementById('q-text-display').innerText = q.pertanyaan;
 
-        let options = [
-            {code: 'A', text: q.opsi_a}, {code: 'B', text: q.opsi_b},
-            {code: 'C', text: q.opsi_c}, {code: 'D', text: q.opsi_d}
-        ];
-
+        let opts = [{c:'A', t:q.opsi_a}, {c:'B', t:q.opsi_b}, {c:'C', t:q.opsi_c}, {c:'D', t:q.opsi_d}];
         let html = '';
-        options.forEach(opt => {
-            // FIX: Gunakan q.id (ID unik soal dari NocoDB)
-            const isSelected = examData.answers[q.id] === opt.code ? 'selected' : '';
-            html += `<div class="option ${isSelected}" onclick="selectAnswer(${q.id}, '${opt.code}')">${opt.code}. ${opt.text}</div>`;
+        opts.forEach(o => {
+            const sel = examData.answers[q.id] === o.c ? 'selected' : '';
+            html += `<div class="option ${sel}" onclick="selectAnswer(${q.id}, '${o.c}')">${o.c}. ${o.t}</div>`;
         });
-        
         document.getElementById('q-options-display').innerHTML = html;
         document.getElementById('btn-submit-exam').style.display = (examData.currentIndex === examData.questions.length - 1) ? 'block' : 'none';
         renderNav();
     }
 
-    function selectAnswer(questionId, code) {
-        examData.answers[questionId] = code; 
-        renderQuestion();
-    }
+    function selectAnswer(id, code) { examData.answers[id] = code; renderQuestion(); }
 
     function renderNav() {
         const nav = document.getElementById('navigation-grid');
         nav.innerHTML = examData.questions.map((q, i) => {
-            const isAnswered = examData.answers[q.id] ? 'answered' : '';
-            const isCurrent = i === examData.currentIndex ? 'current' : '';
-            return `<div class="nav-box ${isAnswered} ${isCurrent}" onclick="jumpTo(${i})">${i + 1}</div>`;
+            const ans = examData.answers[q.id] ? 'answered' : '';
+            const cur = i === examData.currentIndex ? 'current' : '';
+            return `<div class="nav-box ${ans} ${cur}" onclick="jumpTo(${i})">${i + 1}</div>`;
         }).join('');
     }
 
@@ -219,14 +204,12 @@
         showPage('view-loading');
 
         let benar = 0;
-        examData.questions.forEach(q => {
-            if (examData.answers[q.id] === q.jawaban_benar) benar++;
-        });
+        examData.questions.forEach(q => { if (examData.answers[q.id] === q.jawaban_benar) benar++; });
 
         const score = Math.round((benar / examData.questions.length) * 100);
         const q0 = examData.questions[0];
 
-        // PAYLOAD CLEAN UNTUK MENGHINDARI ERROR 400
+        // PAYLOAD DENGAN FORMAT TANGGAL SQL (YYYY-MM-DD HH:mm:ss)
         const payload = {
             nama_siswa: examData.student.nama,
             token: examData.student.token,
@@ -239,8 +222,8 @@
             jml_curang: examData.cheatCount,
             nama_guru: q0.nama_guru || "-",
             jawaban: JSON.stringify(examData.answers),
-            wkt_mulai: examData.startTime.toISOString(),
-            wkt_selesai: new Date().toISOString()
+            wkt_mulai: formatDBDate(examData.startTime),
+            wkt_selesai: formatDBDate(new Date())
         };
 
         try {
@@ -251,16 +234,16 @@
             });
 
             if (res.ok) {
-                document.getElementById('final-message').innerHTML = `Selesai!<br>Skor: ${score}<br>Jawaban berhasil disimpan.`;
+                document.getElementById('final-message').innerHTML = `Berhasil!<br>Nama: ${examData.student.nama}<br>Nilai: ${score}`;
                 showPage('view-result');
             } else {
-                const errData = await res.text();
-                throw new Error(`Gagal Simpan: ${errData}`);
+                const errText = await res.text();
+                throw new Error(errText);
             }
         } catch (e) {
-            alert("Terjadi kesalahan: " + e.message);
+            alert("Gagal kirim: " + e.message);
             showPage('view-exam');
-            startTimer(); // Hidupkan timer lagi jika gagal kirim
+            startTimer();
         }
     }
 
