@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CBT SMAN 2 Cikarang Barat</title>
     <style>
-        /* CSS ASLI - TIDAK ADA PERUBAHAN */
+        /* CSS ASLI */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; padding: 15px; user-select: none; }
         .container { width: 100%; max-width: 650px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-height: 600px; display: flex; flex-direction: column; overflow: hidden; }
@@ -34,7 +34,7 @@
     <div id="view-login" class="page active">
         <div class="header" style="margin: -25px -25px 25px -25px;">
             <h2>CBT SMAN 2 Cikarang Barat</h2>
-            <p>Masukkan data dan Token dengan benar</p>
+            <p>Sistem Ujian Terintegrasi</p>
         </div>
         <label>Nama Peserta</label>
         <input type="text" id="input-nama" placeholder="Nama Lengkap..." autocomplete="off">
@@ -48,7 +48,7 @@
         <label>Kelas (Rombel)</label>
         <select id="input-kelompok"><option value="" disabled selected>-- Pilih Kelas --</option></select>
         <label>Token Ujian</label>
-        <input type="text" id="input-token" placeholder="Contoh: TOKEN123" autocomplete="off">
+        <input type="text" id="input-token" placeholder="Masukkan Token" autocomplete="off">
         <button class="btn" onclick="login()">MULAI UJIAN</button>
     </div>
 
@@ -68,7 +68,7 @@
         </div>
         <div class="control-bar">
             <button class="btn-circle" onclick="prevQ()">❮</button>
-            <button id="btn-submit" class="btn" style="width: auto; padding: 10px 20px; background: #27ae60; display: none;" onclick="submitExam()">KIRIM JAWABAN</button>
+            <button id="btn-submit" class="btn" style="width: auto; padding: 10px 20px; background: #27ae60; display: none;" onclick="submitExam()">KIRIM</button>
             <button class="btn-circle" onclick="nextQ()">❯</button>
         </div>
         <div class="nav-grid" id="nav-grid"></div>
@@ -79,12 +79,11 @@
             <span style="font-size: 50px;">✅</span>
             <div id="final-msg" style="margin-top: 15px; color: #2e7d32; font-weight: bold;"></div>
         </div>
-        <button onclick="location.reload()" class="btn" style="margin-top: 20px; background: #666;">Selesai</button>
+        <button onclick="location.reload()" class="btn" style="margin-top: 20px; background: #666;">Keluar</button>
     </div>
 </div>
 
 <script>
-    // URL Worker Cloudflare Anda
     const API_URL = "https://nocob-proxy.kurikulum-sman2cikarangbarat.workers.dev"; 
 
     let exam = {
@@ -94,8 +93,10 @@
         student: {},
         config: {},
         timer: null,
+        totalDuration: 0,
         timeLeft: 0,
-        cheatCount: 0
+        cheatCount: 0,
+        startTimeObj: null
     };
 
     function filterKelompok() {
@@ -117,37 +118,34 @@
     async function login() {
         const n = document.getElementById('input-nama').value;
         const k = document.getElementById('input-kelas').value;
-        const g = document.getElementById('input-kelompok').value; // Ini id_kelas
+        const g = document.getElementById('input-kelompok').value; 
         const t = document.getElementById('input-token').value.trim();
 
-        if(!n || !k || !g || !t) return alert("Mohon lengkapi data!");
-        
+        if(!n || !k || !g || !t) return alert("Lengkapi data!");
         showPage('view-loading');
         
         try {
-            // 1. Cek Token di tabel 'ujian'
             const resUjian = await fetch(`${API_URL}/api/ujian?where=(token,eq,${t})`);
             const dataUjian = await resUjian.json();
 
             if(dataUjian.list && dataUjian.list.length > 0) {
                 const info = dataUjian.list[0];
-                
-                // 2. Ambil Soal di tabel 'bank_soal' yang kolom token-nya sama
                 const resSoal = await fetch(`${API_URL}/api/bank_soal?where=(token,eq,${t})`);
                 const dataSoal = await resSoal.json();
 
                 if(dataSoal.list && dataSoal.list.length > 0) {
-                    // Acak soal
                     exam.questions = dataSoal.list.sort(() => Math.random() - 0.5);
                     exam.student = { nama: n, tingkat: k, rombel: g, token: t };
                     exam.config = { mapel: info.mapel, guru: info.nama_guru };
-                    exam.timeLeft = (parseInt(info.durasi) || 90) * 60;
+                    exam.totalDuration = (parseInt(info.durasi) || 90) * 60;
+                    exam.timeLeft = exam.totalDuration;
+                    exam.startTimeObj = new Date();
                     
                     showPage('view-exam');
                     renderQuestion();
                     startTimer();
-                } else { throw new Error("Soal untuk token ini belum diinput!"); }
-            } else { throw new Error("Token Ujian tidak ditemukan!"); }
+                } else { throw new Error("Soal belum tersedia!"); }
+            } else { throw new Error("Token salah!"); }
         } catch(e) {
             alert(e.message);
             showPage('view-login');
@@ -169,17 +167,18 @@
         document.getElementById('q-number').innerText = `${exam.currentIndex + 1} / ${exam.questions.length}`;
         document.getElementById('q-text').innerText = q.pertanyaan;
 
-        // Mendukung opsi A sampai E
         let opts = [
-            {c:'A', t:q.opsi_a}, {c:'B', t:q.opsi_b}, {c:'C', t:q.opsi_c}, 
-            {c:'D', t:q.opsi_d}, {c:'E', t:q.opsi_e}
+            {id: 'A', t: q.opsi_a}, {id: 'B', t: q.opsi_b}, {id: 'C', t: q.opsi_c}, 
+            {id: 'D', t: q.opsi_d}, {id: 'E', t: q.opsi_e}
         ];
 
         let html = '';
         opts.forEach(o => {
-            if(o.t) { // Hanya tampilkan jika opsi ada isinya
-                const sel = exam.answers[q.id] === o.c ? 'selected' : '';
-                html += `<div class="option ${sel}" onclick="selectAns('${q.id}', '${o.c}')">${o.c}. ${o.t}</div>`;
+            if(o.t) {
+                // KUNCI PERBAIKAN: Gunakan ID unik soal (q.Id atau q.id) agar tidak menjawab semua
+                const questionKey = q.Id || q.id;
+                const isSelected = exam.answers[questionKey] === o.t ? 'selected' : '';
+                html += `<div class="option ${isSelected}" onclick="selectAns('${questionKey}', '${o.t}')">${o.id}. ${o.t}</div>`;
             }
         });
 
@@ -188,15 +187,16 @@
         renderNav();
     }
 
-    function selectAns(id, code) {
-        exam.answers[id] = code;
+    function selectAns(qId, textVal) {
+        exam.answers[qId] = textVal;
         renderQuestion();
     }
 
     function renderNav() {
         const grid = document.getElementById('nav-grid');
         grid.innerHTML = exam.questions.map((q, i) => {
-            const ans = exam.answers[q.id] ? 'answered' : '';
+            const qId = q.Id || q.id;
+            const ans = exam.answers[qId] ? 'answered' : '';
             const cur = i === exam.currentIndex ? 'current' : '';
             return `<div class="nav-box ${ans} ${cur}" onclick="jump(${i})">${i+1}</div>`;
         }).join('');
@@ -206,35 +206,53 @@
     function nextQ() { if(exam.currentIndex < exam.questions.length - 1) jump(exam.currentIndex + 1); }
     function prevQ() { if(exam.currentIndex > 0) jump(exam.currentIndex - 1); }
 
+    function getFormattedDate(date) {
+        return date.getFullYear() + "-" + 
+               ("0" + (date.getMonth() + 1)).slice(-2) + "-" + 
+               ("0" + date.getDate()).slice(-2) + " " + 
+               ("0" + date.getHours()).slice(-2) + ":" + 
+               ("0" + date.getMinutes()).slice(-2) + ":" + 
+               ("0" + date.getSeconds()).slice(-2);
+    }
+
     async function submitExam() {
-        if(exam.timeLeft > 0 && !confirm("Kirim jawaban sekarang?")) return;
+        if(exam.timeLeft > 0 && !confirm("Kirim sekarang?")) return;
         
         clearInterval(exam.timer);
         showPage('view-loading');
-        document.getElementById('loading-text').innerText = "Menyimpan Nilai...";
-
+        
         let benar = 0;
         exam.questions.forEach(q => {
-            if(exam.answers[q.id] === q.jawaban_benar) benar++;
+            const qId = q.Id || q.id;
+            const jawabanSiswa = exam.answers[qId];
+            
+            // PERBAIKAN LOGIKA: Bandingkan Teks Jawaban Siswa dengan Teks Jawaban Benar
+            // Asumsi kolom jawaban benar di bank_soal berisi TEKS (bukan huruf A/B/C)
+            if(jawabanSiswa === q.jawaban_benar) benar++;
         });
 
         const score = Math.round((benar / exam.questions.length) * 100);
+        const endTimeObj = new Date();
+        
+        // Hitung wkt_digunakan dalam menit
+        const diffMs = endTimeObj - exam.startTimeObj;
+        const wktDigunakan = Math.floor(diffMs / 60000) + " Menit";
 
-        // PAYLOAD DISESUAIKAN DENGAN STRUKTUR TABEL 'nilai' ANDA
         const payload = {
             nama_siswa: exam.student.nama,
             token: exam.student.token,
-            mapel: exam.config.mapel || "Ujian",
+            mapel: exam.config.mapel,
             kelas: exam.student.tingkat,
-            id_kelas: exam.student.rombel, // Mengisi kolom id_kelas dengan pilihan rombel
+            id_kelas: exam.student.rombel,
             jml_benar: benar,
             jml_salah: exam.questions.length - benar,
             nilai: score,
             jml_curang: exam.cheatCount,
-            nama_guru: exam.config.guru || "-",
+            nama_guru: exam.config.guru,
             jawaban: JSON.stringify(exam.answers),
-            wkt_mulai: new Date(Date.now() - ( ( (exam.questions.length * 2) - (exam.timeLeft/60) ) * 60000 )).toISOString().slice(0, 19).replace('T', ' '),
-            wkt_selesai: new Date().toISOString().slice(0, 19).replace('T', ' ')
+            wkt_mulai: getFormattedDate(exam.startTimeObj),
+            wkt_selesai: getFormattedDate(endTimeObj),
+            wkt_digunakan: wktDigunakan // Menambahkan data durasi asli
         };
 
         try {
@@ -245,14 +263,11 @@
             });
 
             if(res.ok) {
-                document.getElementById('final-msg').innerHTML = `Terima kasih ${exam.student.nama}.<br>Nilai Anda: ${score}<br>Data berhasil tersimpan.`;
+                document.getElementById('final-msg').innerHTML = `Berhasil Tersimpan.<br>Skor: ${score}<br>Waktu: ${wktDigunakan}`;
                 showPage('view-result');
-            } else { 
-                const err = await res.text();
-                throw new Error(err); 
-            }
+            } else { throw new Error(await res.text()); }
         } catch(e) {
-            alert("Gagal kirim: " + e.message);
+            alert("Gagal: " + e.message);
             showPage('view-exam');
             startTimer();
         }
@@ -261,7 +276,6 @@
     document.addEventListener("visibilitychange", () => {
         if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
             exam.cheatCount++;
-            alert("Dilarang keluar dari halaman ujian!");
         }
     });
 </script>
