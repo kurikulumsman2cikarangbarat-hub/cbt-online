@@ -12,45 +12,47 @@
         .page { padding: 25px; display: none; flex-grow: 1; flex-direction: column; }
         .page.active { display: flex; }
         
-        /* Form & Input */
         label { font-weight: 600; display: block; margin-bottom: 8px; }
-        input, select { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; font-size: 1rem; transition: 0.3s; }
-        input:focus { border-color: #1a73e8; outline: none; }
+        input, select { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; font-size: 1rem; }
         
-        /* Opsi & Soal */
-        .q-image { width: 100%; max-height: 300px; object-fit: contain; margin-bottom: 15px; border-radius: 10px; display: none; background: #f9f9f9; border: 1px solid #ddd; }
-        .option { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; text-align: left; cursor: pointer; transition: 0.2s; position: relative; }
-        .option:hover { background: #f8f9fa; }
+        .option { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; text-align: left; cursor: pointer; transition: 0.2s; }
         .option.selected { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 600; }
         
-        /* Navigasi & Footer */
         .timer-info { padding: 12px 20px; display: flex; justify-content: space-between; font-weight: bold; color: #1a73e8; background: #e8f0fe; }
         .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; padding: 15px; background: #f8f9fa; max-height: 100px; overflow-y: auto; }
-        .nav-box { height: 40px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 500; }
-        .nav-box.answered { background: #1a73e8; color: white; border-color: #1a73e8; }
-        .nav-box.current { border: 2px solid #f57c00; color: #f57c00; }
-        .control-bar { padding: 15px 25px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .btn-circle { width: 45px; height: 45px; border-radius: 50%; border: none; background: #1a73e8; color: white; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-        .btn-submit { padding: 12px 25px; background: #27ae60; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: none; animation: fadeIn 0.5s; }
+        .nav-box { height: 40px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; }
+        .nav-box.answered { background: #1a73e8; color: white; }
+        .nav-box.current { border: 2px solid #f57c00; }
+
+        .control-bar { padding: 15px 25px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
+        .btn-circle { width: 45px; height: 45px; border-radius: 50%; border: none; background: #1a73e8; color: white; cursor: pointer; }
+        .btn-kirim { padding: 0 25px; background: #27ae60; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: none; }
+
+        /* MODAL KONFIRMASI INTERNAL (PENGGANTI POPUP) */
+        #modal-confirm { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:9999; color:white; padding:30px; text-align:center; }
+        #toast { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; z-index: 1000; }
         
-        /* Notifikasi Custom (Bukan Alert) */
-        #toast { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 1000; }
-        
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="toast">Notifikasi</div>
+    <div id="toast"></div>
+    
+    <div id="modal-confirm">
+        <h3>Selesaikan Ujian?</h3>
+        <p style="margin: 15px 0;">Pastikan semua jawaban sudah benar. Jawaban yang sudah dikirim tidak dapat diubah.</p>
+        <button class="btn-kirim" style="display:block; width:100%; padding:15px; margin-bottom:10px;" onclick="submitData()">YA, KIRIM SEKARANG</button>
+        <button onclick="hideConfirm()" style="background:none; border:none; color:#ccc; cursor:pointer;">Kembali ke Soal</button>
+    </div>
 
     <div id="view-login" class="page active">
         <div class="header" style="margin: -25px -25px 25px -25px; margin-bottom: 20px;">
             <h2>CBT SMAN 2 Cikarang Barat</h2>
         </div>
         <label>Nama Peserta</label>
-        <input type="text" id="input-nama" placeholder="Ketik Nama Lengkap...">
+        <input type="text" id="input-nama" placeholder="Nama Lengkap...">
         <label>Tingkat</label>
         <select id="input-kelas" onchange="filterKelompok()">
             <option value="" disabled selected>-- Pilih Tingkat --</option>
@@ -60,14 +62,14 @@
         </select>
         <label>Rombel</label>
         <select id="input-kelompok"><option value="" disabled selected>-- Pilih Kelas --</option></select>
-        <label>Token Ujian</label>
-        <input type="text" id="input-token" placeholder="Masukkan Token">
-        <button class="btn" style="padding: 18px; font-size: 1.1rem;" onclick="login()">MULAI SEKARANG</button>
+        <label>Token</label>
+        <input type="text" id="input-token" placeholder="Token Ujian">
+        <button onclick="login()" style="width:100%; padding:18px; background:#1a73e8; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">MASUK</button>
     </div>
 
     <div id="view-loading" class="page" style="text-align: center; justify-content: center;">
-        <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
-        <h3 id="loading-text">Menyinkronkan Data...</h3>
+        <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+        <h3 id="loading-text">Memproses...</h3>
     </div>
 
     <div id="view-exam" class="page" style="padding: 0;">
@@ -75,45 +77,37 @@
             <span>SOAL <span id="q-number">1</span></span>
             <span id="timer-display">00:00</span>
         </div>
-        <div style="padding: 20px; flex-grow: 1; overflow-y: auto;" id="scroll-area">
-            <img id="q-img" class="q-image" src="">
-            <div id="q-text" style="font-size: 1.1rem; margin-bottom: 20px; line-height: 1.5;"></div>
+        <div style="padding: 20px; flex-grow: 1; overflow-y: auto;">
+            <img id="q-img" style="width:100%; display:none; border-radius:10px; margin-bottom:15px;">
+            <div id="q-text" style="font-size: 1.1rem; margin-bottom: 20px;"></div>
             <div id="q-options"></div>
         </div>
         <div class="control-bar">
             <button class="btn-circle" onclick="prevQ()">❮</button>
-            <button id="btn-submit" class="btn-submit" onclick="confirmSubmit()">KIRIM JAWABAN</button>
+            <button id="btn-kirim-trigger" class="btn-kirim" onclick="showConfirm()">KIRIM</button>
             <button class="btn-circle" onclick="nextQ()">❯</button>
         </div>
         <div class="nav-grid" id="nav-grid"></div>
     </div>
 
     <div id="view-result" class="page" style="text-align: center; justify-content: center;">
-        <div style="font-size: 4rem; margin-bottom: 10px;">🎉</div>
-        <h2 style="color: #2e7d32;">Ujian Selesai</h2>
-        <div id="final-msg" style="margin: 20px 0; font-size: 1.1rem; color: #555;"></div>
-        <button onclick="location.reload()" class="btn" style="background: #1a73e8; width: 150px; align-self: center;">KELUAR</button>
+        <div style="font-size: 5rem;">✅</div>
+        <h2 style="color: #27ae60; margin: 15px 0;">Terima Kasih</h2>
+        <div id="final-msg" style="line-height: 1.6; color:#555;"></div>
+        <button onclick="location.reload()" style="margin-top:25px; padding:12px 30px; background:#eee; border:none; border-radius:8px; cursor:pointer;">Keluar</button>
     </div>
 </div>
 
 <script>
     const API_URL = "https://nocob-proxy.kurikulum-sman2cikarangbarat.workers.dev";
     let exam = { 
-        questions: [], 
-        currentIndex: 0, 
-        answers: {}, 
-        student: {}, 
-        config: {}, 
-        timer: null, 
-        timeLeft: 0, 
-        start: null,
-        optionStates: {} // Sniper Cache: Menyimpan urutan opsi agar tidak berubah-ubah
+        questions: [], currentIndex: 0, answers: {}, student: {}, 
+        config: {}, timeLeft: 0, start: null, optionStates: {}, cheatCount: 0 
     };
 
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.innerText = msg; t.style.opacity = 1;
-        setTimeout(() => t.style.opacity = 0, 2500);
+    function showToast(m) { 
+        const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = 1;
+        setTimeout(() => t.style.opacity = 0, 2000);
     }
 
     function filterKelompok() {
@@ -125,156 +119,121 @@
         });
     }
 
-    function getImgUrl(link) {
-        if (!link) return "";
-        const id = link.match(/[-\w]{25,}/);
-        return id ? `https://lh3.googleusercontent.com/u/0/d/${id[0]}` : link;
-    }
+    function showConfirm() { document.getElementById('modal-confirm').style.display = 'flex'; }
+    function hideConfirm() { document.getElementById('modal-confirm').style.display = 'none'; }
 
     async function login() {
-        const n = document.getElementById('input-nama').value, k = document.getElementById('input-kelas').value, g = document.getElementById('input-kelompok').value, t = document.getElementById('input-token').value.trim();
-        if(!n || !k || !g || !t) return showToast("Lengkapi data login!");
+        const n = document.getElementById('input-nama').value, k = document.getElementById('input-kelas').value, 
+              g = document.getElementById('input-kelompok').value, t = document.getElementById('input-token').value.trim();
+        if(!n || !k || !g || !t) return showToast("Lengkapi semua kolom!");
 
         document.getElementById('view-login').style.display = 'none';
         document.getElementById('view-loading').classList.add('active');
 
         try {
-            // Sniper Mode: Ambil durasi dan soal dalam satu aliran
-            const [resUj, resSoal] = await Promise.all([
+            const [rU, rS] = await Promise.all([
                 fetch(`${API_URL}/api/ujian?where=(token,eq,${t})`),
                 fetch(`${API_URL}/api/bank_soal?where=(token,eq,${t})`)
             ]);
+            const [dU, dS] = await Promise.all([rU.json(), rS.json()]);
+
+            if(!dU.list.length) throw new Error("Token Salah!");
             
-            const [dUj, dSoal] = await Promise.all([resUj.json(), resSoal.json()]);
-
-            if(!dUj.list.length) throw new Error("Token tidak ditemukan!");
-            if(!dSoal.list.length) throw new Error("Soal belum tersedia!");
-
-            // Inisialisasi Data
-            exam.questions = dSoal.list.sort(() => Math.random() - 0.5);
-            exam.student = { nama: n, rombel: g, token: t };
-            exam.config = { mapel: dUj.list[0].mapel, guru: dUj.list[0].nama_guru, durasi: dUj.list[0].durasi };
-            exam.timeLeft = (parseInt(dUj.list[0].durasi) || 90) * 60;
+            exam.questions = dS.list.sort(() => Math.random() - 0.5);
+            exam.student = { nama: n, tingkat: k, rombel: g, token: t };
+            exam.config = { mapel: dU.list[0].mapel, guru: dU.list[0].nama_guru, durasi: dU.list[0].durasi };
+            exam.timeLeft = (parseInt(dU.list[0].durasi) || 90) * 60;
             exam.start = new Date();
 
             document.getElementById('view-loading').classList.remove('active');
             document.getElementById('view-exam').classList.add('active');
             renderQuestion();
             startTimer();
-        } catch(e) { 
-            showToast(e.message); 
-            setTimeout(() => location.reload(), 2000);
-        }
+        } catch(e) { showToast(e.message); location.reload(); }
     }
 
     function renderQuestion() {
         const q = exam.questions[exam.currentIndex];
         const qId = q.Id || q.id;
-        
         document.getElementById('q-number').innerText = `${exam.currentIndex + 1} / ${exam.questions.length}`;
         document.getElementById('q-text').innerHTML = q.soal;
-        document.getElementById('scroll-area').scrollTop = 0;
 
-        const imgTag = document.getElementById('q-img');
-        const url = getImgUrl(q.img_link);
-        if(url) { imgTag.src = url; imgTag.style.display = 'block'; } else { imgTag.style.display = 'none'; }
+        const img = document.getElementById('q-img');
+        if(q.img_link) { 
+            const id = q.img_link.match(/[-\w]{25,}/);
+            img.src = id ? `https://lh3.googleusercontent.com/u/0/d/${id[0]}` : q.img_link;
+            img.style.display = 'block';
+        } else { img.style.display = 'none'; }
 
-        // Logic Sniper Opsi: Jika belum pernah diacak, acak sekali saja. Jika sudah, pakai urutan lama.
         if (!exam.optionStates[qId]) {
-            let base = [
-                { lab: 'A', txt: q.opsi_a }, { lab: 'B', txt: q.opsi_b },
-                { lab: 'C', txt: q.opsi_c }, { lab: 'D', txt: q.opsi_d }, { lab: 'E', txt: q.opsi_e }
-            ].filter(o => o.txt);
-            exam.optionStates[qId] = base.sort(() => Math.random() - 0.5);
+            let opts = [{l:'A',t:q.opsi_a},{l:'B',t:q.opsi_b},{l:'C',t:q.opsi_c},{l:'D',t:q.opsi_d},{l:'E',t:q.opsi_e}].filter(o=>o.t);
+            exam.optionStates[qId] = opts.sort(() => Math.random() - 0.5);
         }
 
-        let html = '';
+        let h = '';
         exam.optionStates[qId].forEach((o, i) => {
             const letter = String.fromCharCode(65 + i);
-            const isSel = exam.answers[qId] === o.lab ? 'selected' : '';
-            html += `<div class="option ${isSel}" onclick="selectAns('${qId}', '${o.lab}')">
-                        <b>${letter}.</b> ${o.txt}
-                    </div>`;
+            const sel = exam.answers[qId] === o.l ? 'selected' : '';
+            h += `<div class="option ${sel}" onclick="setAns('${qId}','${o.l}')"><b>${letter}.</b> ${o.t}</div>`;
         });
+        document.getElementById('q-options').innerHTML = h;
 
-        document.getElementById('q-options').innerHTML = html;
-        checkSubmitVisibility();
+        const done = Object.keys(exam.answers).length === exam.questions.length;
+        document.getElementById('btn-kirim-trigger').style.display = done ? 'block' : 'none';
         renderNav();
     }
 
-    function selectAns(id, lab) {
-        exam.answers[id] = lab;
-        renderQuestion();
-        // Delay sedikit agar siswa melihat pilihannya sebelum pindah otomatis
-        setTimeout(() => { if(exam.currentIndex < exam.questions.length - 1) nextQ(); }, 300);
+    function setAns(id, l) { 
+        exam.answers[id] = l; renderQuestion(); 
+        setTimeout(() => { if(exam.currentIndex < exam.questions.length - 1) jump(exam.currentIndex + 1); }, 400);
     }
-
-    function checkSubmitVisibility() {
-        // Tombol muncul HANYA jika semua soal sudah terjawab, berapapun nomor soalnya
-        const answeredCount = Object.keys(exam.answers).length;
-        document.getElementById('btn-submit').style.display = (answeredCount === exam.questions.length) ? 'block' : 'none';
-    }
-
+    
     function startTimer() {
         exam.timer = setInterval(() => {
             exam.timeLeft--;
-            let m = Math.floor(exam.timeLeft/60).toString().padStart(2,'0');
-            let s = (exam.timeLeft%60).toString().padStart(2,'0');
+            let m = Math.floor(exam.timeLeft/60).toString().padStart(2,'0'), s = (exam.timeLeft%60).toString().padStart(2,'0');
             document.getElementById('timer-display').innerText = `${m}:${s}`;
-            if(exam.timeLeft <= 0) autoSubmit();
+            if(exam.timeLeft <= 0) submitData();
         }, 1000);
     }
 
     function jump(i) { exam.currentIndex = i; renderQuestion(); }
-    function nextQ() { if(exam.currentIndex < exam.questions.length - 1) jump(exam.currentIndex + 1); }
-    function prevQ() { if(exam.currentIndex > 0) jump(exam.currentIndex - 1); }
+    function nextQ() { if(exam.currentIndex < exam.questions.length-1) jump(exam.currentIndex+1); }
+    function prevQ() { if(exam.currentIndex > 0) jump(exam.currentIndex-1); }
 
     function renderNav() {
-        document.getElementById('nav-grid').innerHTML = exam.questions.map((q, i) => {
-            const qId = q.Id || q.id;
-            return `<div class="nav-box ${exam.answers[qId] ? 'answered' : ''} ${i === exam.currentIndex ? 'current' : ''}" onclick="jump(${i})">${i+1}</div>`;
-        }).join('');
-    }
-
-    function confirmSubmit() {
-        if(confirm("Apakah Anda yakin ingin mengakhiri ujian dan mengirim jawaban?")) submitData();
-    }
-
-    function autoSubmit() {
-        showToast("Waktu habis! Jawaban dikirim otomatis...");
-        setTimeout(submitData, 2000);
+        document.getElementById('nav-grid').innerHTML = exam.questions.map((q, i) => 
+            `<div class="nav-box ${exam.answers[q.Id||q.id]?'answered':''} ${i===exam.currentIndex?'current':''}" onclick="jump(${i})">${i+1}</div>`
+        ).join('');
     }
 
     async function submitData() {
+        hideConfirm();
         clearInterval(exam.timer);
         document.getElementById('view-exam').style.display = 'none';
         document.getElementById('view-loading').classList.add('active');
-        document.getElementById('loading-text').innerText = "Mengirim Jawaban...";
+        document.getElementById('loading-text').innerText = "Menyimpan ke Server...";
 
-        // Sorting Berdasarkan ID untuk String Jawaban
         let sorted = [...exam.questions].sort((a,b) => (a.Id||a.id) - (b.Id||b.id));
         let strAns = "", benar = 0;
-
         sorted.forEach(q => {
-            const qId = q.Id || q.id;
-            const ans = exam.answers[qId] || "-";
-            strAns += ans;
-            if(ans === q.kunci) benar++;
+            const a = exam.answers[q.Id||q.id] || "-";
+            strAns += a; if(a === q.kunci) benar++;
         });
 
-        const score = Math.round((benar / exam.questions.length) * 100);
         const now = new Date();
-
         const payload = {
             nama_siswa: exam.student.nama,
             token: exam.student.token,
             mapel: exam.config.mapel,
+            kelas: exam.student.tingkat, // INPUT KOLOM KELAS
             id_kelas: exam.student.rombel,
             jml_benar: benar,
             jml_salah: exam.questions.length - benar,
-            nilai: score,
+            nilai: Math.round((benar/exam.questions.length)*100),
             nama_guru: exam.config.guru,
             jawaban: strAns,
+            curang: exam.cheatCount, // INPUT KOLOM CURANG
             wkt_diberikan: exam.config.durasi + " Menit",
             wkt_mulai: exam.start.toISOString().slice(0,19).replace('T',' '),
             wkt_selesai: now.toISOString().slice(0,19).replace('T',' '),
@@ -283,23 +242,19 @@
 
         try {
             await fetch(`${API_URL}/api/nilai`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+                method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
             document.getElementById('view-loading').classList.remove('active');
             document.getElementById('view-result').classList.add('active');
-            document.getElementById('final-msg').innerHTML = `<b>${exam.student.nama}</b> dari <b>${exam.student.rombel}</b><br>Telah menyelesaikan ujian <b>${exam.config.mapel}</b>.`;
-        } catch(e) {
-            showToast("Gagal mengirim! Mencoba kembali...");
-            setTimeout(submitData, 3000);
-        }
+            document.getElementById('final-msg').innerHTML = `Jawaban <b>${exam.student.nama}</b> berhasil terkirim.<br>Silakan tunjukkan layar ini kepada pengawas.`;
+        } catch(e) { showToast("Gagal kirim, mencoba ulang..."); setTimeout(submitData, 3000); }
     }
 
-    // Proteksi Tab
     document.addEventListener("visibilitychange", () => {
         if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
-            showToast("Dilarang meninggalkan halaman ujian!");
+            exam.cheatCount++;
+            showToast("⚠️ Peringatan: Jangan pindah tab!");
         }
     });
 </script>
