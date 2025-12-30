@@ -17,6 +17,24 @@ body {
     -ms-user-select: none; 
 }
 
+/* Fullscreen mode */
+body:fullscreen { padding: 0; }
+body:-webkit-full-screen { padding: 0; }
+body:-moz-full-screen { padding: 0; }
+body:-ms-fullscreen { padding: 0; }
+
+body:fullscreen .container { 
+    border-radius: 0; 
+    min-height: 100vh; 
+    max-width: 100%; 
+}
+
+body:-webkit-full-screen .container { 
+    border-radius: 0; 
+    min-height: 100vh; 
+    max-width: 100%; 
+}
+
 .container { 
     width: 100%; 
     max-width: 650px; 
@@ -46,6 +64,34 @@ body {
 
 .page.active { 
     display: flex; 
+}
+
+/* Modal Styles */
+.modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+.modal-content {
+    background: white;
+    color: #333;
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
 }
 
 label { 
@@ -103,25 +149,25 @@ input, select, .option, .q-text, #q-text {
 /* NAVIGATION GRID LEBIH KECIL */
 .nav-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(35px, 1fr)); /* Diperkecil dari 45px ke 35px */
-    gap: 5px; /* Diperkecil dari 8px ke 5px */
-    padding: 10px; /* Diperkecil dari 15px ke 10px */
+    grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+    gap: 5px;
+    padding: 10px;
     background: #f8f9fa; 
-    max-height: 85px; /* Diperkecil dari 100px ke 85px */
+    max-height: 85px;
     overflow-y: auto; 
 }
 
 .nav-box { 
-    height: 32px; /* Diperkecil dari 40px ke 32px */
-    width: 32px; /* Diperkecil dari 40px ke 32px */
+    height: 32px;
+    width: 32px;
     display: flex; 
     align-items: center; 
     justify-content: center; 
     background: #fff; 
     border: 1px solid #ccc; 
-    border-radius: 6px; /* Diperkecil dari 8px ke 6px */
+    border-radius: 6px;
     cursor: pointer; 
-    font-size: 0.9rem; /* Teks lebih kecil */
+    font-size: 0.9rem;
 }
 
 .nav-box.answered { 
@@ -162,24 +208,6 @@ input, select, .option, .q-text, #q-text {
     display: none; 
 }
 
-/* MODAL KONFIRMASI INTERNAL (PENGGANTI POPUP) */
-#modal-confirm { 
-    position: absolute; 
-    top:0; 
-    left:0; 
-    width:100%; 
-    height:100%; 
-    background: rgba(0,0,0,0.8); 
-    display:none; 
-    flex-direction:column; 
-    justify-content:center; 
-    align-items:center; 
-    z-index:9999; 
-    color:white; 
-    padding:30px; 
-    text-align:center; 
-}
-
 #toast { 
     position: absolute; 
     bottom: 80px; 
@@ -206,15 +234,32 @@ input, select, .option, .q-text, #q-text {
     100% { transform: rotate(360deg); } 
 }
 
-/* Overlay untuk blokir inspect */
-#block-overlay {
+/* Fullscreen warning indicator */
+.fullscreen-warning {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    z-index: 9999999;
+    top: 10px;
+    right: 10px;
+    background: #ff4444;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    z-index: 9999;
+    display: none;
+}
+
+/* Exit fullscreen button */
+#exit-fullscreen-btn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    z-index: 999;
     display: none;
 }
 
