@@ -36,11 +36,23 @@
         <label>Token</label>
         <input type="text" id="input-token" placeholder="Token Ujian">
         <button onclick="login()" style="width:100%; padding:18px; background:#1a73e8; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">MASUK</button>
+        
+        <div class="footer-text" style="margin-top: 30px; text-align: center; color: #666; font-size: 0.9rem;">
+            Dibuat oleh Donny Nugroho
+        </div>
     </div>
 
     <div id="view-loading" class="page" style="text-align: center; justify-content: center;">
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
         <h3 id="loading-text">Memproses...</h3>
+    </div>
+
+    <div id="view-welcome" class="page" style="text-align: center; justify-content: center; padding: 30px;">
+        <h2 style="color: #1a73e8; margin-bottom: 20px;">Selamat Datang!</h2>
+        <div id="welcome-text" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px;"></div>
+        <button onclick="startExam()" style="padding: 15px 40px; background: #1a73e8; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem;">
+            MULAI UJIAN
+        </button>
     </div>
 
     <div id="view-exam" class="page" style="padding: 0;">
@@ -59,6 +71,10 @@
             <button class="btn-circle" onclick="nextQ()">❯</button>
         </div>
         <div class="nav-grid" id="nav-grid"></div>
+        
+        <div class="footer-text" style="text-align: center; padding: 10px; color: #666; font-size: 0.8rem; border-top: 1px solid #eee;">
+            Dibuat oleh Donny Nugroho
+        </div>
     </div>
 
     <div id="view-result" class="page" style="text-align: center; justify-content: center;">
@@ -66,6 +82,10 @@
         <h2 style="color: #27ae60; margin: 15px 0;">Terima Kasih</h2>
         <div id="final-msg" style="line-height: 1.6; color:#555;"></div>
         <button onclick="location.reload()" style="margin-top:25px; padding:12px 30px; background:#eee; border:none; border-radius:8px; cursor:pointer;">Keluar</button>
+        
+        <div class="footer-text" style="margin-top: 30px; color: #666; font-size: 0.9rem;">
+            Dibuat oleh Donny Nugroho
+        </div>
     </div>
 </div>
 
