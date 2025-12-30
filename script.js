@@ -17,12 +17,6 @@ let exam = {
 function requestFullscreen() {
     const elem = document.documentElement;
     
-    if (!exam.fullscreenRequested) {
-        showFullscreenModal();
-        exam.fullscreenRequested = true;
-        return;
-    }
-    
     if (elem.requestFullscreen) {
         elem.requestFullscreen().then(() => {
             exam.isFullscreen = true;
@@ -90,10 +84,6 @@ function checkFullscreenPeriodically() {
             exam.cheatCount++;
             showToast(`⚠️ PERINGATAN ${exam.cheatCount}: Kembali ke fullscreen!`);
             
-            if (exam.cheatCount >= 2) {
-                showFullscreenModal();
-            }
-            
             if (exam.cheatCount >= 3) {
                 showToast("❌ Keluar fullscreen berkali-kali! Ujian diakhiri.");
                 setTimeout(() => submitData(), 2000);
@@ -122,152 +112,8 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => showWelcome(), 500);
         }
     });
-    
-    // Deteksi perubahan fullscreen state
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('msfullscreenchange', handleFullscreenChange);
 });
 
-function handleFullscreenChange() {
-    const isFullscreenNow = !!(document.fullscreenElement || 
-                              document.webkitFullscreenElement || 
-                              document.msFullscreenElement);
-    
-    exam.isFullscreen = isFullscreenNow;
-    
-    if (!isFullscreenNow && document.getElementById('view-exam').classList.contains('active')) {
-        exam.cheatCount++;
-        showToast(`⚠️ PERINGATAN ${exam.cheatCount}: Kembali ke fullscreen!`);
-        
-        if (exam.cheatCount >= 3) {
-            showToast("❌ Keluar fullscreen berkali-kali! Ujian diakhiri.");
-            setTimeout(() => submitData(), 2000);
-        }
-    }
-}
-
-// ==================== FUNGSI KEAMANAN ====================
-function enableSecurityFeatures() {
-    // Blokir klik kanan
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        showToast("⛔ Klik kanan dinonaktifkan");
-        return false;
-    });
-    
-    // Blokir shortcut keyboard
-    document.addEventListener('keydown', function(e) {
-        // Izinkan F11 untuk fullscreen manual
-        if (e.keyCode === 122) return true;
-        
-        // Blokir F12 (Inspect)
-        if (e.keyCode === 123) {
-            e.preventDefault();
-            showToast("⛔ Inspect dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+Shift+I (Inspect)
-        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
-            e.preventDefault();
-            showToast("⛔ Inspect dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+Shift+J (Console)
-        if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
-            e.preventDefault();
-            showToast("⛔ Console dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+Shift+C (Inspect Element)
-        if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
-            e.preventDefault();
-            showToast("⛔ Inspect dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+U (View Source)
-        if (e.ctrlKey && e.keyCode === 85) {
-            e.preventDefault();
-            showToast("⛔ View source dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+C (Copy)
-        if (e.ctrlKey && e.keyCode === 67 && !e.shiftKey) {
-            e.preventDefault();
-            showToast("⛔ Copy teks dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+V (Paste)
-        if (e.ctrlKey && e.keyCode === 86) {
-            e.preventDefault();
-            showToast("⛔ Paste teks dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+X (Cut)
-        if (e.ctrlKey && e.keyCode === 88) {
-            e.preventDefault();
-            showToast("⛔ Cut teks dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+A (Select All)
-        if (e.ctrlKey && e.keyCode === 65) {
-            e.preventDefault();
-            showToast("⛔ Select all dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+S (Save Page)
-        if (e.ctrlKey && e.keyCode === 83) {
-            e.preventDefault();
-            showToast("⛔ Save page dinonaktifkan");
-            return false;
-        }
-        
-        // Blokir Ctrl+P (Print)
-        if (e.ctrlKey && e.keyCode === 80) {
-            e.preventDefault();
-            showToast("⛔ Print dinonaktifkan");
-            return false;
-        }
-    });
-    
-    // Blokir drag and drop
-    document.addEventListener('dragstart', function(e) {
-        e.preventDefault();
-        return false;
-    });
-    
-    document.addEventListener('drop', function(e) {
-        e.preventDefault();
-        return false;
-    });
-    
-    // Blokir seleksi teks
-    document.addEventListener('selectstart', function(e) {
-        e.preventDefault();
-        return false;
-    });
-    
-    // Deteksi Developer Tools
-    let devtools = function() {};
-    devtools.toString = function() {
-        showToast("⚠️ Aktivitas mencurigakan terdeteksi!");
-        exam.cheatCount++;
-    };
-    
-    console.log('%c', devtools);
-    console.clear();
-}
-
-// ==================== FUNGSI UTAMA ====================
 function showToast(m) { 
     const t = document.getElementById('toast'); 
     t.innerText = m; 
@@ -276,25 +122,16 @@ function showToast(m) {
 }
 
 function filterKelompok() {
-    const tingkat = document.getElementById('input-kelas').value;
-    const select = document.getElementById('input-kelompok');
-    select.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
-    
-    ["A","B","C","D","E","F","G","H","I","J","K","L"].forEach(huruf => {
-        let option = document.createElement("option");
-        option.value = `${tingkat} - ${huruf}`;
-        option.text = `${tingkat} - ${huruf}`;
-        select.appendChild(option);
+    const t = document.getElementById('input-kelas').value;
+    const s = document.getElementById('input-kelompok');
+    s.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
+    ["A","B","C","D","E","F","G","H","I","J","K","L"].forEach(h => {
+        let o = document.createElement("option"); o.value = `${t} - ${h}`; o.text = `${t} - ${h}`; s.appendChild(o);
     });
 }
 
-function showConfirm() { 
-    document.getElementById('modal-confirm').style.display = 'flex'; 
-}
-
-function hideConfirm() { 
-    document.getElementById('modal-confirm').style.display = 'none'; 
-}
+function showConfirm() { document.getElementById('modal-confirm').style.display = 'flex'; }
+function hideConfirm() { document.getElementById('modal-confirm').style.display = 'none'; }
 
 function showWelcome() {
     const welcomeText = `
@@ -336,66 +173,37 @@ function startExam() {
 }
 
 async function login() {
-    const nama = document.getElementById('input-nama').value;
-    const kelas = document.getElementById('input-kelas').value;
-    const kelompok = document.getElementById('input-kelompok').value;
-    const token = document.getElementById('input-token').value.trim();
-    
-    if(!nama || !kelas || !kelompok || !token) {
-        showToast("Lengkapi semua kolom!");
-        return;
-    }
+    const n = document.getElementById('input-nama').value, k = document.getElementById('input-kelas').value, 
+          g = document.getElementById('input-kelompok').value, t = document.getElementById('input-token').value.trim();
+    if(!n || !k || !g || !t) return showToast("Lengkapi semua kolom!");
 
-    // Aktifkan fitur keamanan setelah login
-    enableSecurityFeatures();
-    
     document.getElementById('view-login').style.display = 'none';
     document.getElementById('view-loading').classList.add('active');
-    document.getElementById('loading-text').innerText = "Memeriksa token...";
 
     try {
-        const [resUjian, resSoal] = await Promise.all([
-            fetch(`${API_URL}/api/ujian?where=(token,eq,${token})`),
-            fetch(`${API_URL}/api/bank_soal?where=(token,eq,${token})`)
+        const [rU, rS] = await Promise.all([
+            fetch(`${API_URL}/api/ujian?where=(token,eq,${t})`),
+            fetch(`${API_URL}/api/bank_soal?where=(token,eq,${t})`)
         ]);
-        
-        const [dataUjian, dataSoal] = await Promise.all([
-            resUjian.json(),
-            resSoal.json()
-        ]);
+        const [dU, dS] = await Promise.all([rU.json(), rS.json()]);
 
-        if(!dataUjian.list.length) {
-            throw new Error("Token Salah!");
-        }
+        if(!dU.list.length) throw new Error("Token Salah!");
         
-        exam.questions = dataSoal.list.sort(() => Math.random() - 0.5);
-        exam.student = { 
-            nama: nama, 
-            tingkat: kelas, 
-            rombel: kelompok, 
-            token: token 
-        };
-        exam.config = { 
-            mapel: dataUjian.list[0].mapel, 
-            guru: dataUjian.list[0].nama_guru, 
-            durasi: dataUjian.list[0].durasi 
-        };
-        exam.timeLeft = (parseInt(dataUjian.list[0].durasi) || 90) * 60;
+        exam.questions = dS.list.sort(() => Math.random() - 0.5);
+        exam.student = { nama: n, tingkat: k, rombel: g, token: t };
+        exam.config = { mapel: dU.list[0].mapel, guru: dU.list[0].nama_guru, durasi: dU.list[0].durasi };
+        exam.timeLeft = (parseInt(dU.list[0].durasi) || 90) * 60;
         exam.start = new Date();
 
-        // Tampilkan modal fullscreen
+        // Tampilkan modal fullscreen (TAMBAHAN SATU-SATUNYA)
         showFullscreenModal();
         
-    } catch(error) { 
-        showToast(error.message); 
-        setTimeout(() => location.reload(), 2000);
-    }
+    } catch(e) { showToast(e.message); location.reload(); }
 }
 
 function renderQuestion() {
     const q = exam.questions[exam.currentIndex];
     const qId = q.Id || q.id;
-    
     document.getElementById('q-number').innerText = `${exam.currentIndex + 1} / ${exam.questions.length}`;
     document.getElementById('q-text').innerHTML = q.soal;
 
@@ -404,116 +212,62 @@ function renderQuestion() {
         const id = q.img_link.match(/[-\w]{25,}/);
         img.src = id ? `https://lh3.googleusercontent.com/u/0/d/${id[0]}` : q.img_link;
         img.style.display = 'block';
-    } else { 
-        img.style.display = 'none'; 
-    }
+    } else { img.style.display = 'none'; }
 
     if (!exam.optionStates[qId]) {
-        let options = [
-            {label:'A', text:q.opsi_a},
-            {label:'B', text:q.opsi_b},
-            {label:'C', text:q.opsi_c},
-            {label:'D', text:q.opsi_d},
-            {label:'E', text:q.opsi_e}
-        ].filter(o => o.text);
-        
-        exam.optionStates[qId] = options.sort(() => Math.random() - 0.5);
+        let opts = [{l:'A',t:q.opsi_a},{l:'B',t:q.opsi_b},{l:'C',t:q.opsi_c},{l:'D',t:q.opsi_d},{l:'E',t:q.opsi_e}].filter(o=>o.t);
+        exam.optionStates[qId] = opts.sort(() => Math.random() - 0.5);
     }
 
-    let html = '';
-    exam.optionStates[qId].forEach((option, index) => {
-        const letter = String.fromCharCode(65 + index);
-        const selected = exam.answers[qId] === option.label ? 'selected' : '';
-        html += `<div class="option ${selected}" onclick="setAns('${qId}','${option.label}')">
-                    <b>${letter}.</b> ${option.text}
-                 </div>`;
+    let h = '';
+    exam.optionStates[qId].forEach((o, i) => {
+        const letter = String.fromCharCode(65 + i);
+        const sel = exam.answers[qId] === o.l ? 'selected' : '';
+        h += `<div class="option ${sel}" onclick="setAns('${qId}','${o.l}')"><b>${letter}.</b> ${o.t}</div>`;
     });
-    
-    document.getElementById('q-options').innerHTML = html;
+    document.getElementById('q-options').innerHTML = h;
 
-    const semuaTerjawab = Object.keys(exam.answers).length === exam.questions.length;
-    document.getElementById('btn-kirim-trigger').style.display = semuaTerjawab ? 'block' : 'none';
-    
+    const done = Object.keys(exam.answers).length === exam.questions.length;
+    document.getElementById('btn-kirim-trigger').style.display = done ? 'block' : 'none';
     renderNav();
 }
 
-function setAns(id, label) { 
-    exam.answers[id] = label; 
-    renderQuestion(); 
-    setTimeout(() => { 
-        if(exam.currentIndex < exam.questions.length - 1) {
-            jump(exam.currentIndex + 1); 
-        }
-    }, 400);
+function setAns(id, l) { 
+    exam.answers[id] = l; renderQuestion(); 
+    setTimeout(() => { if(exam.currentIndex < exam.questions.length - 1) jump(exam.currentIndex + 1); }, 400);
 }
-
+    
 function startTimer() {
     exam.timer = setInterval(() => {
         exam.timeLeft--;
-        let minutes = Math.floor(exam.timeLeft/60).toString().padStart(2,'0');
-        let seconds = (exam.timeLeft%60).toString().padStart(2,'0');
-        document.getElementById('timer-display').innerText = `${minutes}:${seconds}`;
-        
-        // Warning ketika waktu hampir habis
-        if(exam.timeLeft === 300) { // 5 menit
-            showToast("⏰ Waktu tersisa 5 menit!");
-        }
-        
-        if(exam.timeLeft <= 0) {
-            showToast("⏰ Waktu habis! Jawaban otomatis dikirim");
-            submitData();
-        }
+        let m = Math.floor(exam.timeLeft/60).toString().padStart(2,'0'), s = (exam.timeLeft%60).toString().padStart(2,'0');
+        document.getElementById('timer-display').innerText = `${m}:${s}`;
+        if(exam.timeLeft <= 0) submitData();
     }, 1000);
 }
 
-function jump(index) { 
-    exam.currentIndex = index; 
-    renderQuestion(); 
-}
-
-function nextQ() { 
-    if(exam.currentIndex < exam.questions.length - 1) {
-        jump(exam.currentIndex + 1); 
-    }
-}
-
-function prevQ() { 
-    if(exam.currentIndex > 0) {
-        jump(exam.currentIndex - 1); 
-    }
-}
+function jump(i) { exam.currentIndex = i; renderQuestion(); }
+function nextQ() { if(exam.currentIndex < exam.questions.length-1) jump(exam.currentIndex+1); }
+function prevQ() { if(exam.currentIndex > 0) jump(exam.currentIndex-1); }
 
 function renderNav() {
-    document.getElementById('nav-grid').innerHTML = exam.questions.map((q, index) => {
-        const qId = q.Id || q.id;
-        const answered = exam.answers[qId] ? 'answered' : '';
-        const current = index === exam.currentIndex ? 'current' : '';
-        
-        return `<div class="nav-box ${answered} ${current}" onclick="jump(${index})">${index + 1}</div>`;
-    }).join('');
+    document.getElementById('nav-grid').innerHTML = exam.questions.map((q, i) => 
+        `<div class="nav-box ${exam.answers[q.Id||q.id]?'answered':''} ${i===exam.currentIndex?'current':''}" onclick="jump(${i})">${i+1}</div>`
+    ).join('');
 }
 
 async function submitData() {
     hideConfirm();
     clearInterval(exam.timer);
-    
-    // Exit fullscreen sebelum submit
-    if (exam.isFullscreen) {
-        exitFullscreen();
-    }
-    
     document.getElementById('view-exam').style.display = 'none';
     document.getElementById('view-loading').classList.add('active');
-    document.getElementById('loading-text').innerText = "Menyimpan jawaban ke server...";
+    document.getElementById('loading-text').innerText = "Menyimpan ke Server...";
 
-    let sortedQuestions = [...exam.questions].sort((a, b) => (a.Id||a.id) - (b.Id||b.id));
-    let stringJawaban = "";
-    let benar = 0;
-    
-    sortedQuestions.forEach(q => {
-        const jawaban = exam.answers[q.Id||q.id] || "-";
-        stringJawaban += jawaban;
-        if(jawaban === q.kunci) benar++;
+    let sorted = [...exam.questions].sort((a,b) => (a.Id||a.id) - (b.Id||b.id));
+    let strAns = "", benar = 0;
+    sorted.forEach(q => {
+        const a = exam.answers[q.Id||q.id] || "-";
+        strAns += a; if(a === q.kunci) benar++;
     });
 
     const now = new Date();
@@ -527,7 +281,7 @@ async function submitData() {
         jml_salah: exam.questions.length - benar,
         nilai: Math.round((benar/exam.questions.length)*100),
         nama_guru: exam.config.guru,
-        jawaban: stringJawaban,
+        jawaban: strAns,
         curang: exam.cheatCount,
         wkt_diberikan: exam.config.durasi + " Menit",
         wkt_mulai: exam.start.toISOString().slice(0,19).replace('T',' '),
@@ -536,56 +290,25 @@ async function submitData() {
     };
 
     try {
-        document.getElementById('loading-text').innerText = "Mengirim data...";
-        
         await fetch(`${API_URL}/api/nilai`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+            method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
         
+        // Exit fullscreen saat selesai (TAMBAHAN)
+        if (exam.isFullscreen) {
+            exitFullscreen();
+        }
+        
         document.getElementById('view-loading').classList.remove('active');
         document.getElementById('view-result').classList.add('active');
-        document.getElementById('final-msg').innerHTML = 
-            `Jawaban <b>${exam.student.nama}</b> berhasil dikirim.<br>
-             <span style="color: #27ae60; font-weight: bold;">Nilai: ${payload.nilai}</span><br><br>
-             <small>Silakan tunjukkan layar ini kepada pengawas.</small>`;
-    } catch(error) { 
-        showToast("Gagal kirim, mencoba ulang..."); 
-        setTimeout(submitData, 3000); 
-    }
+        document.getElementById('final-msg').innerHTML = `Jawaban <b>${exam.student.nama}</b> berhasil terkirim.<br>Silakan tunjukkan layar ini kepada pengawas.`;
+    } catch(e) { showToast("Gagal kirim, mencoba ulang..."); setTimeout(submitData, 3000); }
 }
 
-// Deteksi berpindah tab
 document.addEventListener("visibilitychange", () => {
     if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
         exam.cheatCount++;
-        showToast("⚠️ PERINGATAN: Jangan pindah tab atau window!");
-        showToast(`Peringatan ${exam.cheatCount}: Aktivitas dicurigai`);
-        
-        if(exam.cheatCount >= 3) {
-            showToast("❌ Terdeteksi kecurangan! Ujian diakhiri.");
-            setTimeout(() => submitData(), 2000);
-        }
+        showToast("⚠️ Peringatan: Jangan pindah tab!");
     }
 });
-
-// Deteksi resize window (indikasi inspect)
-window.addEventListener('resize', function() {
-    if (document.getElementById('view-exam').classList.contains('active')) {
-        if(window.outerHeight - window.innerHeight > 100 || window.outerWidth - window.innerWidth > 100) {
-            exam.cheatCount++;
-            showToast("⚠️ Aktivitas mencurigakan terdeteksi!");
-        }
-    }
-});
-
-// Mencegah akses ke console
-(function() {
-    const noop = function() {};
-    const methods = ['log', 'debug', 'warn', 'info', 'error', 'assert', 'clear', 'count', 'dir', 'dirxml', 'table', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'time', 'timeEnd', 'timeStamp', 'profile', 'profileEnd'];
-    
-    methods.forEach(function(method) {
-        console[method] = noop;
-    });
-})();
