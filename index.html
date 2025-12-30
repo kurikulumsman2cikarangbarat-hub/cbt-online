@@ -54,7 +54,7 @@
 
     <div id="view-loading" class="page" style="text-align: center; justify-content: center;">
         <div class="loader"></div>
-        <h3>Memproses...</h3>
+        <h3>Memproses Data...</h3>
     </div>
 
     <div id="view-exam" class="page" style="padding: 0;">
@@ -68,7 +68,7 @@
         </div>
         <div class="control-bar">
             <button class="btn-circle" onclick="prevQuestion()">❮</button>
-            <button id="btn-submit-exam" class="btn" style="width: auto; padding: 10px 20px; background: #27ae60; display: none;" onclick="finishExam()">KIRIM</button>
+            <button id="btn-submit-exam" class="btn" style="width: auto; padding: 10px 20px; background: #27ae60; display: none;" onclick="finishExam()">KIRIM JAWABAN</button>
             <button class="btn-circle" onclick="nextQuestion()">❯</button>
         </div>
         <div class="nav-grid" id="navigation-grid"></div>
@@ -89,30 +89,26 @@
     let examData = {
         questions: [],
         currentIndex: 0,
-        answers: {}, // Format: { questionId: "A" }
+        answers: {}, // Key menggunakan ID Soal agar unik
         student: {},
         startTime: null,
-        cheatCount: 0
+        cheatCount: 0,
+        timer: null,
+        remainingSeconds: 0
     };
 
-    // MENGEMBALIKAN DROPDOWN LENGKAP ANDA
     function filterKelompok() {
         const tingkat = document.getElementById('input-kelas').value;
         const sel = document.getElementById('input-kelompok');
         sel.innerHTML = '<option value="" disabled selected>-- Pilih Kelas --</option>';
         
         let list = [];
-        if (tingkat === "X") {
-            list = ["X - A", "X - B", "X - C", "X - D", "X - E", "X - F"];
-        } else if (tingkat === "XI") {
-            list = ["XI - A", "XI - B", "XI - C", "XI - D", "XI - E", "XI - F", "XI - G"];
-        } else if (tingkat === "XII") {
-            list = ["XII - A", "XII - B", "XII - C", "XII - D", "XII - E", "XII - F", "XII - G"];
-        }
+        if (tingkat === "X") list = ["X - A", "X - B", "X - C", "X - D", "X - E", "X - F"];
+        else if (tingkat === "XI") list = ["XI - A", "XI - B", "XI - C", "XI - D", "XI - E", "XI - F", "XI - G"];
+        else if (tingkat === "XII") list = ["XII - A", "XII - B", "XII - C", "XII - D", "XII - E", "XII - F", "XII - G"];
         
         list.forEach(k => {
-            let o = document.createElement("option");
-            o.value = k; o.innerText = k;
+            let o = document.createElement("option"); o.value = k; o.innerText = k;
             sel.appendChild(o);
         });
     }
@@ -133,12 +129,11 @@
         showPage('view-loading');
 
         try {
-            // Cek Token
             const resToken = await fetch(`${API_URL}/api/ujian?where=(token,eq,${p})`);
             const dataToken = await resToken.json();
 
             if (dataToken.list && dataToken.list.length > 0) {
-                // Ambil Soal
+                const infoUjian = dataToken.list[0];
                 const resSoal = await fetch(`${API_URL}/api/bank_soal?where=(token,eq,${p})`);
                 const dataSoal = await resSoal.json();
 
@@ -146,14 +141,35 @@
                     examData.questions = dataSoal.list.sort(() => Math.random() - 0.5);
                     examData.student = { nama: n, tingkat: k, kelas: g, token: p };
                     examData.startTime = new Date();
+                    
+                    // Timer Setting (Ambil dari tabel ujian kolom durasi, jika ada)
+                    const durasiMenit = parseInt(infoUjian.durasi) || 90;
+                    examData.remainingSeconds = durasiMenit * 60;
+                    
                     showPage('view-exam');
                     renderQuestion();
+                    startTimer();
                 } else { throw new Error("Soal belum tersedia untuk token ini."); }
-            } else { throw new Error("Password / Token tidak ditemukan!"); }
+            } else { throw new Error("Token salah atau tidak aktif!"); }
         } catch (e) {
             showPage('view-login');
             alert(e.message);
         }
+    }
+
+    function startTimer() {
+        if (examData.timer) clearInterval(examData.timer);
+        examData.timer = setInterval(() => {
+            examData.remainingSeconds--;
+            let m = Math.floor(examData.remainingSeconds / 60).toString().padStart(2, '0');
+            let s = (examData.remainingSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+            if (examData.remainingSeconds <= 0) {
+                clearInterval(examData.timer);
+                alert("Waktu Habis!");
+                finishExam();
+            }
+        }, 1000);
     }
 
     function renderQuestion() {
@@ -168,9 +184,9 @@
 
         let html = '';
         options.forEach(opt => {
-            // PERBAIKAN LOGIKA: Cek berdasarkan ID unik soal, bukan indeks
+            // FIX: Gunakan q.id (ID unik soal dari NocoDB)
             const isSelected = examData.answers[q.id] === opt.code ? 'selected' : '';
-            html += `<div class="option ${isSelected}" onclick="selectAnswer('${q.id}', '${opt.code}')">${opt.code}. ${opt.text}</div>`;
+            html += `<div class="option ${isSelected}" onclick="selectAnswer(${q.id}, '${opt.code}')">${opt.code}. ${opt.text}</div>`;
         });
         
         document.getElementById('q-options-display').innerHTML = html;
@@ -179,7 +195,7 @@
     }
 
     function selectAnswer(questionId, code) {
-        examData.answers[questionId] = code; // Simpan berdasarkan ID unik soal
+        examData.answers[questionId] = code; 
         renderQuestion();
     }
 
@@ -197,29 +213,31 @@
     function prevQuestion() { if (examData.currentIndex > 0) jumpTo(examData.currentIndex - 1); }
 
     async function finishExam() {
-        if (!confirm("Apakah Anda yakin ingin mengirim semua jawaban?")) return;
+        if (examData.remainingSeconds > 0 && !confirm("Kirim jawaban sekarang?")) return;
         
+        clearInterval(examData.timer);
         showPage('view-loading');
+
         let benar = 0;
         examData.questions.forEach(q => {
             if (examData.answers[q.id] === q.jawaban_benar) benar++;
         });
 
         const score = Math.round((benar / examData.questions.length) * 100);
-        const qInfo = examData.questions[0];
+        const q0 = examData.questions[0];
 
-        // PAYLOAD SESUAI DENGAN STRUKTUR TABEL 'nilai' ANDA
+        // PAYLOAD CLEAN UNTUK MENGHINDARI ERROR 400
         const payload = {
             nama_siswa: examData.student.nama,
             token: examData.student.token,
-            mapel: qInfo.mapel,
+            mapel: q0.mapel || "Ujian",
             kelas: examData.student.tingkat,
             id_kelas: examData.student.kelas,
             jml_benar: benar,
             jml_salah: examData.questions.length - benar,
             nilai: score,
             jml_curang: examData.cheatCount,
-            nama_guru: qInfo.nama_guru,
+            nama_guru: q0.nama_guru || "-",
             jawaban: JSON.stringify(examData.answers),
             wkt_mulai: examData.startTime.toISOString(),
             wkt_selesai: new Date().toISOString()
@@ -233,21 +251,23 @@
             });
 
             if (res.ok) {
-                document.getElementById('final-message').innerHTML = `Selamat ${examData.student.nama}, nilai Anda telah terinput ke database.<br>Tunjukkan layar ini ke Pengawas.`;
+                document.getElementById('final-message').innerHTML = `Selesai!<br>Skor: ${score}<br>Jawaban berhasil disimpan.`;
                 showPage('view-result');
             } else {
-                throw new Error("Gagal menyimpan ke database. Cek koneksi.");
+                const errData = await res.text();
+                throw new Error(`Gagal Simpan: ${errData}`);
             }
         } catch (e) {
-            alert("Terjadi kesalahan fatal: " + e.message);
+            alert("Terjadi kesalahan: " + e.message);
             showPage('view-exam');
+            startTimer(); // Hidupkan timer lagi jika gagal kirim
         }
     }
 
     document.addEventListener("visibilitychange", () => {
         if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
             examData.cheatCount++;
-            alert("PERINGATAN: Jangan keluar dari halaman ujian!");
+            alert("Dilarang keluar halaman!");
         }
     });
 </script>
