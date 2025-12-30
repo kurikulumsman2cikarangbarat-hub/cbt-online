@@ -11,13 +11,32 @@
 <div class="container">
     <div id="toast"></div>
     
-    <div id="modal-confirm">
+    <!-- Modal Fullscreen Prompt -->
+    <div id="modal-fullscreen" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2 style="color: #1a73e8; margin-bottom: 15px;">⛔ PERHATIAN</h2>
+            <p style="margin-bottom: 20px; line-height: 1.6;">
+                Untuk menjaga integritas ujian, Anda harus masuk ke mode <strong>FULLSCREEN</strong>.<br>
+                Klik tombol di bawah untuk mengaktifkan fullscreen otomatis.
+            </p>
+            <button id="btn-fullscreen" style="width:100%; padding:15px; background:#1a73e8; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; font-size:1.1rem; margin-bottom:10px;">
+                🔲 AKTIFKAN FULLSCREEN
+            </button>
+            <p style="color: #666; font-size:0.9rem;">
+                Jika tombol tidak berfungsi, tekan <strong>F11</strong> pada keyboard Anda
+            </p>
+        </div>
+    </div>
+    
+    <!-- Modal Konfirmasi Submit -->
+    <div id="modal-confirm" class="modal" style="display: none;">
         <h3>Selesaikan Ujian?</h3>
         <p style="margin: 15px 0;">Pastikan semua jawaban sudah benar. Jawaban yang sudah dikirim tidak dapat diubah.</p>
         <button class="btn-kirim" style="display:block; width:100%; padding:15px; margin-bottom:10px;" onclick="submitData()">YA, KIRIM SEKARANG</button>
         <button onclick="hideConfirm()" style="background:none; border:none; color:#ccc; cursor:pointer;">Kembali ke Soal</button>
     </div>
 
+    <!-- View Login -->
     <div id="view-login" class="page active">
         <div class="header" style="margin: -25px -25px 25px -25px; margin-bottom: 20px;">
             <h2>CBT SMAN 2 Cikarang Barat</h2>
@@ -42,11 +61,13 @@
         </div>
     </div>
 
+    <!-- View Loading -->
     <div id="view-loading" class="page" style="text-align: center; justify-content: center;">
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
         <h3 id="loading-text">Memproses...</h3>
     </div>
 
+    <!-- View Welcome -->
     <div id="view-welcome" class="page" style="text-align: center; justify-content: center; padding: 30px;">
         <h2 style="color: #1a73e8; margin-bottom: 20px;">Selamat Datang!</h2>
         <div id="welcome-text" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px;"></div>
@@ -55,6 +76,7 @@
         </button>
     </div>
 
+    <!-- View Exam -->
     <div id="view-exam" class="page" style="padding: 0;">
         <div class="timer-info">
             <span>SOAL <span id="q-number">1</span></span>
@@ -77,11 +99,12 @@
         </div>
     </div>
 
+    <!-- View Result -->
     <div id="view-result" class="page" style="text-align: center; justify-content: center;">
         <div style="font-size: 5rem;">✅</div>
         <h2 style="color: #27ae60; margin: 15px 0;">Terima Kasih</h2>
         <div id="final-msg" style="line-height: 1.6; color:#555;"></div>
-        <button onclick="location.reload()" style="margin-top:25px; padding:12px 30px; background:#eee; border:none; border-radius:8px; cursor:pointer;">Keluar</button>
+        <button onclick="exitFullscreenAndReload()" style="margin-top:25px; padding:12px 30px; background:#eee; border:none; border-radius:8px; cursor:pointer;">Keluar</button>
         
         <div class="footer-text" style="margin-top: 30px; color: #666; font-size: 0.9rem;">
             Dibuat oleh Donny Nugroho
