@@ -8,7 +8,8 @@ let exam = {
     timeLeft: 0, 
     start: null, 
     optionStates: {}, 
-    cheatCount: 0 
+    cheatCount: 0,
+    cheatHistory: [] // Tambahan: untuk menyimpan history waktu curang
 };
 
 // ==================== FUNGSI FULLSCREEN SIMPLE ====================
@@ -53,8 +54,24 @@ function filterKelompok() {
     });
 }
 
-function showConfirm() { document.getElementById('modal-confirm').style.display = 'flex'; }
-function hideConfirm() { document.getElementById('modal-confirm').style.display = 'none'; }
+function showConfirm() { 
+    // Tampilkan jumlah curang di modal
+    const cheatWarning = document.getElementById('cheat-warning');
+    const cheatCountText = document.getElementById('cheat-count-text');
+    
+    if (exam.cheatCount > 0) {
+        cheatWarning.style.display = 'block';
+        cheatCountText.textContent = exam.cheatCount;
+    } else {
+        cheatWarning.style.display = 'none';
+    }
+    
+    document.getElementById('modal-confirm').style.display = 'flex'; 
+}
+
+function hideConfirm() { 
+    document.getElementById('modal-confirm').style.display = 'none'; 
+}
 
 function showWelcome() {
     const welcomeText = `
@@ -63,22 +80,26 @@ function showWelcome() {
             Anda akan mengerjakan ujian <strong>${exam.config.mapel}</strong><br>
             untuk kelas <strong>${exam.student.rombel}</strong>
         </p>
+        <p style="margin-bottom: 15px;">
+            <strong>Pengampu:</strong> ${exam.config.guru}<br>
+            <strong>Waktu:</strong> ${exam.config.durasi} menit<br>
+            <strong>Jumlah Soal:</strong> ${exam.questions.length} butir
+        </p>
         <div style="background: #e8f0fe; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-            <p style="margin-bottom: 10px;">📝 <strong>Petunjuk:</strong></p>
+            <p style="margin-bottom: 10px;">📝 <strong>Petunjuk Kejujuran:</strong></p>
             <ul style="text-align: left; margin-left: 20px;">
-                <li>Kerjakan soal dengan sungguh-sungguh dan jujur</li>
-                <li>Waktu ujian: <strong>${exam.config.durasi} menit</strong></li>
-                <li>Total soal: <strong>${exam.questions.length} butir</strong></li>
-                <li>Pilih jawaban dengan mengklik opsi yang tersedia</li>
-                <li>Klik KIRIM setelah semua soal terjawab</li>
+                <li>Kerjakan soal dengan <strong>sungguh-sungguh dan jujur</strong></li>
+                <li>Sistem akan mencatat setiap kali meninggalkan halaman ujian</li>
+                <li>Hasil ujian akan lebih bermakna jika diperoleh dengan usaha sendiri</li>
+                <li>Kejujuran adalah cermin karakter peserta didik yang berkualitas</li>
             </ul>
         </div>
-        <p style="font-style: italic; color: #666;">
-            "Kejujuran adalah fondasi karakter yang kuat.<br>
-            Hasil terbaik datang dari usaha yang tulus."
+        <p style="font-style: italic; color: #666; border-left: 3px solid #1a73e8; padding-left: 15px;">
+            "Pendidikan yang sejati tidak hanya mengajarkan pengetahuan,<br>
+            tetapi juga menanamkan integritas dan kejujuran dalam diri."
         </p>
         <p style="margin-top: 20px; font-weight: bold; color: #27ae60;">
-            Selamat mengerjakan! 🎯
+            Selamat mengerjakan dengan jujur! 🎯
         </p>
     `;
     
@@ -92,6 +113,42 @@ function startExam() {
     document.getElementById('view-exam').classList.add('active');
     renderQuestion();
     startTimer();
+}
+
+// ==================== FUNGSI DETEKSI CURANG ====================
+function detectCheating() {
+    exam.cheatCount++;
+    
+    // Catat waktu kejadian curang
+    const now = new Date();
+    exam.cheatHistory.push({
+        count: exam.cheatCount,
+        timestamp: now.toISOString(),
+        waktu: now.toLocaleTimeString()
+    });
+    
+    // Tampilkan peringatan dengan toast
+    let warningMessage = "";
+    if (exam.cheatCount === 1) {
+        warningMessage = "⚠️ Terdeteksi meninggalkan halaman ujian (1)";
+    } else if (exam.cheatCount === 2) {
+        warningMessage = "⚠️ Terdeteksi meninggalkan halaman ujian (2) - Ingat kejujuran!";
+    } else if (exam.cheatCount === 3) {
+        warningMessage = "⚠️ Peringatan akhir! Meninggalkan halaman akan dicatat sebagai kecurangan";
+    } else {
+        warningMessage = `⚠️ ${exam.cheatCount}x meninggalkan halaman - Akan dilaporkan`;
+    }
+    
+    showToast(warningMessage);
+    
+    // Jika curang lebih dari 5x, tampilkan peringatan lebih keras
+    if (exam.cheatCount >= 5) {
+        showToast("❌ Aktivitas mencurigakan berulang! Laporkan ke pengawas");
+    }
+    
+    // Update tombol kirim jika perlu
+    const done = Object.keys(exam.answers).length === exam.questions.length;
+    document.getElementById('btn-kirim-trigger').style.display = done ? 'block' : 'none';
 }
 
 async function login() {
@@ -113,14 +170,18 @@ async function login() {
         
         exam.questions = dS.list.sort(() => Math.random() - 0.5);
         exam.student = { nama: n, tingkat: k, rombel: g, token: t };
-        exam.config = { mapel: dU.list[0].mapel, guru: dU.list[0].nama_guru, durasi: dU.list[0].durasi };
+        exam.config = { 
+            mapel: dU.list[0].mapel, 
+            guru: dU.list[0].nama_guru,  // Ambil nama_guru dari database
+            durasi: dU.list[0].durasi 
+        };
         exam.timeLeft = (parseInt(dU.list[0].durasi) || 90) * 60;
         exam.start = new Date();
 
         // LANGSUNG FULLSCREEN tanpa modal konfirmasi
         enterFullscreen();
         
-        // Tampilkan welcome page
+        // Tampilkan welcome page dengan data lengkap
         showWelcome();
         
     } catch(e) { showToast(e.message); location.reload(); }
@@ -205,9 +266,9 @@ async function submitData() {
         jml_benar: benar,
         jml_salah: exam.questions.length - benar,
         nilai: Math.round((benar/exam.questions.length)*100),
-        nama_guru: exam.config.guru,
+        nama_guru: exam.config.guru, // Sudah ada dari sebelumnya
         jawaban: strAns,
-        curang: exam.cheatCount,
+        jml_curang: exam.cheatCount, // PERUBAHAN: ganti "curang" menjadi "jml_curang"
         wkt_diberikan: exam.config.durasi + " Menit",
         wkt_mulai: exam.start.toISOString().slice(0,19).replace('T',' '),
         wkt_selesai: now.toISOString().slice(0,19).replace('T',' '),
@@ -225,13 +286,38 @@ async function submitData() {
         
         document.getElementById('view-loading').classList.remove('active');
         document.getElementById('view-result').classList.add('active');
-        document.getElementById('final-msg').innerHTML = `Jawaban <b>${exam.student.nama}</b> berhasil terkirim.<br>Silakan tunjukkan layar ini kepada pengawas.`;
+        
+        // Tampilkan pesan dengan informasi curang jika ada
+        let finalMessage = `Jawaban <b>${exam.student.nama}</b> berhasil terkirim.`;
+        if (exam.cheatCount > 0) {
+            finalMessage += `<br><span style="color: #ff6b6b; font-weight: bold;">Catatan: ${exam.cheatCount}x meninggalkan halaman tercatat</span>`;
+        }
+        finalMessage += `<br>Silakan tunjukkan layar ini kepada pengawas.`;
+        
+        document.getElementById('final-msg').innerHTML = finalMessage;
     } catch(e) { showToast("Gagal kirim, mencoba ulang..."); setTimeout(submitData, 3000); }
 }
 
+// ==================== DETEKSI PERPINDAHAN TAB/WINDOW ====================
 document.addEventListener("visibilitychange", () => {
     if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
-        exam.cheatCount++;
-        showToast("⚠️ Peringatan: Jangan pindah tab!");
+        // Deteksi hanya jika sedang di halaman ujian
+        detectCheating();
+    }
+});
+
+// Deteksi jika mencoba keluar dari halaman
+window.addEventListener('blur', function() {
+    if (document.getElementById('view-exam').classList.contains('active')) {
+        detectCheating();
+    }
+});
+
+// Deteksi jika mencoba resize window (indikasi inspect)
+window.addEventListener('resize', function() {
+    if (document.getElementById('view-exam').classList.contains('active')) {
+        if(window.outerHeight - window.innerHeight > 100 || window.outerWidth - window.innerWidth > 100) {
+            detectCheating();
+        }
     }
 });
