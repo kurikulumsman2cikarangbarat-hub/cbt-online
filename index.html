@@ -11,24 +11,9 @@
 <div class="container">
     <div id="toast"></div>
     
-    <!-- Modal Konfirmasi Submit dengan peringatan curang -->
+    <!-- Modal Konfirmasi Submit saja -->
     <div id="modal-confirm" class="modal" style="display: none;">
         <h3>Selesaikan Ujian?</h3>
-        
-        <!-- Tampilan peringatan curang -->
-        <div id="cheat-warning" style="display: none; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;">
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <div style="background: #ff6b6b; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px;">
-                    ⚠️
-                </div>
-                <h4 style="margin: 0; color: #856404;">Peringatan Kejujuran</h4>
-            </div>
-            <p style="margin: 0; color: #856404; font-size: 0.9rem;">
-                <span id="cheat-count-text">0</span> kali terdeteksi meninggalkan halaman ujian.<br>
-                <strong>Ingat:</strong> Kejujuran adalah fondasi karakter yang kuat. Hasil yang diperoleh dengan usaha sendiri akan membanggakan.
-            </p>
-        </div>
-        
         <p style="margin: 15px 0;">Pastikan semua jawaban sudah benar. Jawaban yang sudah dikirim tidak dapat diubah.</p>
         <button class="btn-kirim" style="display:block; width:100%; padding:15px; margin-bottom:10px;" onclick="submitData()">YA, KIRIM SEKARANG</button>
         <button onclick="hideConfirm()" style="background:none; border:none; color:#ccc; cursor:pointer;">Kembali ke Soal</button>
