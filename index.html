@@ -1,27 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>CBT Online</title>
+<style>
+body { font-family: Arial; background:#f3f4f6; padding:30px }
+.box { max-width:600px; margin:auto; background:#fff; padding:20px; border-radius:8px }
+button,input { width:100%; padding:10px; margin:8px 0 }
+button { background:#2563eb; color:#fff; border:none }
+</style>
+</head>
 <body>
 
-<input id="token" placeholder="TOKEN">
-<button onclick="login()">LOGIN</button>
+<div class="box" id="login">
+  <h2>Login Ujian</h2>
+  <input id="token" placeholder="Token Ujian">
+  <input id="nama" placeholder="Nama Lengkap">
+  <button onclick="login()">Masuk</button>
+  <pre id="msg"></pre>
+</div>
 
-<pre id="out"></pre>
+<div class="box" id="ujian" style="display:none">
+  <h3 id="mapel"></h3>
+  <div id="soal"></div>
+  <div id="opsi"></div>
+  <button onclick="submit()">Kirim</button>
+</div>
 
 <script>
-const W = "https://worker-abk.kurikulum-sman2cikarangbarat.workers.dev";
+const WORKER = "https://worker-abk.kurikulum-sman2cikarangbarat.workers.dev";
+
+let soal = [];
+let jawaban = [];
 
 async function login() {
-  const token = document.getElementById("token").value;
+  const token = document.getElementById("token").value.trim();
+  const nama = document.getElementById("nama").value.trim();
 
-  const res = await fetch(W + "/api/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token })
+  const res = await fetch(WORKER, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ token, nama })
   });
 
   const data = await res.json();
-  document.getElementById("out").textContent =
-    JSON.stringify(data, null, 2);
+  document.getElementById("msg").textContent = JSON.stringify(data,null,2);
+
+  if (!res.ok) return;
+
+  soal = data.soal;
+  document.getElementById("login").style.display="none";
+  document.getElementById("ujian").style.display="block";
+  document.getElementById("mapel").textContent = data.mapel;
+  tampil(0);
+}
+
+function tampil(i) {
+  const q = soal[i];
+  document.getElementById("soal").innerHTML = q.soal;
+  const opsi = document.getElementById("opsi");
+  opsi.innerHTML = "";
+  ["A","B","C","D","E"].forEach(h=>{
+    if(q["opsi_"+h.toLowerCase()]){
+      const b=document.createElement("button");
+      b.textContent=h+". "+q["opsi_"+h.toLowerCase()];
+      b.onclick=()=>jawaban[i]=h;
+      opsi.appendChild(b);
+    }
+  });
+}
+
+async function submit() {
+  const token = document.getElementById("token").value;
+  const nama = document.getElementById("nama").value;
+
+  const res = await fetch(WORKER,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ token, nama, jawaban })
+  });
+
+  const data = await res.json();
+  alert("Nilai: "+data.nilai);
 }
 </script>
 
