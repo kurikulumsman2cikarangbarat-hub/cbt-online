@@ -236,8 +236,10 @@ async function submitData() {
 
 document.addEventListener("visibilitychange", () => {
     if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
+        exam.tabSwitchCount++; 
         exam.cheatCount++;
         showToast("⚠️ Peringatan: Jangan pindah tab!");
     }
 });
+
 
