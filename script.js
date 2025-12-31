@@ -258,7 +258,7 @@ async function submitData() {
                     <p style="margin:0; color:#856404; font-weight:bold;">📋 LAPORAN PELANGGARAN:</p>
                     <p style="margin:5px 0 0 0; color:#856404;">
                         Anda meninggalkan halaman ujian sebanyak: <strong>${exam.tabSwitchCount} kali</strong>
-                        <br>Data ini telah dicatat dan akan dilaporkan ke pengawas ruang.
+                        <br>Data ini telah tercatat dan akan diketahui guru Mapel sebagai pertimbangan pemberian Nilai.
                     </p>
                 </div>
             `;
@@ -282,3 +282,4 @@ document.addEventListener("visibilitychange", () => {
         exam.cheatCount++;
     }
 });
+
