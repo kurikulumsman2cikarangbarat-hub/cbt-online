@@ -8,7 +8,7 @@ let exam = {
     timeLeft: 0, 
     start: null, 
     optionStates: {}, 
-    cheatCount: 0, 
+    cheatCount: 0,
     tabSwitchCount: 0 
 };
 
@@ -230,16 +230,38 @@ async function submitData() {
         
         document.getElementById('view-loading').classList.remove('active');
         document.getElementById('view-result').classList.add('active');
-        document.getElementById('final-msg').innerHTML = `Jawaban <b>${exam.student.nama}</b> berhasil terkirim.<br>Silakan tunjukkan layar ini kepada pengawas.`;
-    } catch(e) { showToast("Gagal kirim, mencoba ulang..."); setTimeout(submitData, 3000); }
+        
+        // TAMPILKAN LAPORAN PELANGGARAN DI HALAMAN AKHIR
+        let pelanggaranMessage = "";
+        if (exam.tabSwitchCount === 0) {
+            pelanggaranMessage = "<p style='color:#27ae60; margin:10px 0;'>✅ Tidak tercatat meninggalkan halaman ujian.</p>";
+        } else {
+            pelanggaranMessage = `
+                <div style="background:#fff3cd; padding:12px; border-radius:8px; margin:15px 0; border-left:4px solid #ff9800;">
+                    <p style="margin:0; color:#856404; font-weight:bold;">📋 LAPORAN PELANGGARAN:</p>
+                    <p style="margin:5px 0 0 0; color:#856404;">
+                        Anda meninggalkan halaman ujian sebanyak: <strong>${exam.tabSwitchCount} kali</strong>
+                        <br>Data ini telah dicatat dan akan dilaporkan ke pengawas ruang.
+                    </p>
+                </div>
+            `;
+        }
+        
+        document.getElementById('final-msg').innerHTML = `
+            Jawaban <b>${exam.student.nama}</b> berhasil terkirim.<br>
+            ${pelanggaranMessage}
+            Silakan tunjukkan layar ini kepada pengawas.
+        `;
+    } catch(e) { 
+        showToast("Gagal kirim, mencoba ulang..."); 
+        setTimeout(submitData, 3000); 
+    }
 }
 
+// EVENT LISTENER UNTUK MENCATAT BERPINDAH TAB (TANPA NOTIFIKASI)
 document.addEventListener("visibilitychange", () => {
     if (document.hidden && document.getElementById('view-exam').classList.contains('active')) {
         exam.tabSwitchCount++; 
         exam.cheatCount++;
-        showToast("⚠️ Peringatan: Jangan pindah tab!");
     }
 });
-
-
