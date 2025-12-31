@@ -8,7 +8,8 @@ let exam = {
     timeLeft: 0, 
     start: null, 
     optionStates: {}, 
-    cheatCount: 0 
+    cheatCount: 0, 
+    tabSwitchCount: 0 
 };
 
 // ==================== FUNGSI FULLSCREEN SIMPLE ====================
@@ -192,7 +193,10 @@ async function submitData() {
     let strAns = "", benar = 0;
     sorted.forEach(q => {
         const a = exam.answers[q.Id||q.id] || "-";
-        strAns += a; if(a === q.kunci) benar++;
+        strAns += a;
+        // Jika kunci kosong, default ke "A", jika tidak gunakan kunci dari database
+        const kunciBenar = q.kunci && q.kunci.trim() !== "" ? q.kunci : "A";
+        if(a === kunciBenar) benar++;
     });
 
     const now = new Date();
@@ -208,6 +212,7 @@ async function submitData() {
         nama_guru: exam.config.guru,
         jawaban: strAns,
         curang: exam.cheatCount,
+        jml_curang: exam.tabSwitchCount, 
         wkt_diberikan: exam.config.durasi + " Menit",
         wkt_mulai: exam.start.toISOString().slice(0,19).replace('T',' '),
         wkt_selesai: now.toISOString().slice(0,19).replace('T',' '),
@@ -235,3 +240,4 @@ document.addEventListener("visibilitychange", () => {
         showToast("⚠️ Peringatan: Jangan pindah tab!");
     }
 });
+
