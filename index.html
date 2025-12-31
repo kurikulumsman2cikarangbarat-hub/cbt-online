@@ -1,16 +1,32 @@
-async function login() {
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>TEST LOGIN CBT</h2>
+
+<input id="token" placeholder="Token ujian">
+<button onclick="cek()">CEK TOKEN</button>
+
+<pre id="out"></pre>
+
+<script>
+async function cek() {
   const token = document.getElementById("token").value;
 
   const res = await fetch(
-    `https://worker-abk.kurikulum-sman2cikarangbarat.workers.dev/api/login?token=${encodeURIComponent(token)}`
+    "https://worker-abk.kurikulum-sman2cikarangbarat.workers.dev/api/login",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token })
+    }
   );
 
   const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.error);
-    return;
-  }
-
-  console.log("LOGIN OK", data);
+  document.getElementById("out").textContent =
+    JSON.stringify(data, null, 2);
 }
+</script>
+
+</body>
+</html>
