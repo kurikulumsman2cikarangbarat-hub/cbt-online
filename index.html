@@ -2,29 +2,29 @@
 <html>
 <body>
 
-<h2>TEST LOGIN CBT</h2>
-
-<input id="token" placeholder="Token ujian">
-<button onclick="cek()">CEK TOKEN</button>
+<input id="token" placeholder="token">
+<input id="nama" placeholder="nama">
+<button onclick="login()">LOGIN</button>
 
 <pre id="out"></pre>
 
 <script>
-async function cek() {
-  const token = document.getElementById("token").value;
-
+async function login() {
   const res = await fetch(
-    "https://worker-abk.kurikulum-sman2cikarangbarat.workers.dev/api/login",
+    "https://worker-abk.kurikulum-sman2cikarangbarat.workers.dev/api/submit-ujian",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token })
+      body: JSON.stringify({
+        mode: "login",
+        token: token.value,
+        nama: nama.value
+      })
     }
   );
 
   const data = await res.json();
-  document.getElementById("out").textContent =
-    JSON.stringify(data, null, 2);
+  out.textContent = JSON.stringify(data, null, 2);
 }
 </script>
 
