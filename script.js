@@ -200,6 +200,23 @@ async function submitData() {
     });
 
     const now = new Date();
+    
+    // FUNGSI UNTUK KONVERSI KE GMT+7
+    function toGMT7(date) {
+        // Tambah 7 jam (7 * 60 * 60 * 1000 milidetik)
+        const gmt7Time = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+        // Format: YYYY-MM-DD HH:MM:SS
+        return gmt7Time.toISOString().slice(0,19).replace('T',' ');
+    }
+    
+    // Konversi waktu mulai dan selesai ke GMT+7
+    const waktuMulaiGMT7 = toGMT7(exam.start);
+    const waktuSelesaiGMT7 = toGMT7(now);
+    
+    // Hitung durasi dalam menit
+    const durasiMs = now - exam.start;
+    const durasiMenit = Math.floor(durasiMs / 60000);
+    
     const payload = {
         nama_siswa: exam.student.nama,
         token: exam.student.token,
@@ -214,9 +231,9 @@ async function submitData() {
         curang: exam.cheatCount,
         jml_curang: exam.tabSwitchCount, 
         wkt_diberikan: exam.config.durasi + " Menit",
-        wkt_mulai: exam.start.toISOString().slice(0,19).replace('T',' '),
-        wkt_selesai: now.toISOString().slice(0,19).replace('T',' '),
-        wkt_digunakan: Math.floor((now - exam.start)/60000) + " Menit"
+        wkt_mulai: waktuMulaiGMT7, // WAKTI GMT+7
+        wkt_selesai: waktuSelesaiGMT7, // WAKTI GMT+7
+        wkt_digunakan: durasiMenit + " Menit"
     };
 
     try {
